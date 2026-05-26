@@ -1,0 +1,598 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <meta name="theme-color" content="#1B5E20"/>
+  <meta name="description" content="Portal de Encomendas — Portaria Digital"/>
+  <title>📦 Encomendas — Portaria</title>
+  <link rel="manifest" href="manifest.json"/>
+
+  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-messaging-compat.js"></script>
+
+  <style>
+    :root {
+      --verde:      #2E7D32;
+      --verde-dark: #1B5E20;
+      --verde-light:#A5D6A7;
+      --verde-bg:   #E8F5E9;
+      --laranja:    #F57C00;
+      --laranja-bg: #FFF3E0;
+      --azul:       #1565C0;
+      --azul-bg:    #E3F2FD;
+      --vermelho:   #C62828;
+      --vermelho-bg:#FFEBEE;
+      --cinza:      #607D8B;
+      --cinza-bg:   #ECEFF1;
+      --branco:     #FFFFFF;
+      --texto:      #212121;
+      --subtexto:   #757575;
+      --borda:      #E0E0E0;
+      --shadow:     0 2px 8px rgba(0,0,0,0.12);
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; background: #F1F8E9; color: var(--texto); min-height: 100vh; }
+
+    .header { background: linear-gradient(135deg, var(--verde-dark), var(--verde)); color: white; padding: 16px 20px; display: flex; align-items: center; justify-content: space-between; position: sticky; top: 0; z-index: 100; box-shadow: var(--shadow); }
+    .header-titulo { font-size: 18px; font-weight: 600; }
+    .header-sub { font-size: 12px; opacity: 0.85; margin-top: 2px; }
+    .btn-sair { background: rgba(255,255,255,0.2); border: 1px solid rgba(255,255,255,0.4); color: white; padding: 6px 14px; border-radius: 20px; cursor: pointer; font-size: 13px; }
+
+    .tela { display: none; padding: 20px; max-width: 480px; margin: 0 auto; }
+    .tela.ativa { display: block; }
+
+    .card { background: var(--branco); border-radius: 16px; padding: 24px; box-shadow: var(--shadow); margin-bottom: 16px; }
+
+    .login-logo { text-align: center; padding: 32px 0 16px; font-size: 56px; }
+    .login-titulo { text-align: center; font-size: 22px; font-weight: 700; color: var(--verde-dark); margin-bottom: 6px; }
+    .login-sub { text-align: center; color: var(--subtexto); font-size: 14px; margin-bottom: 28px; }
+
+    .campo-label { display: block; font-size: 13px; font-weight: 600; color: var(--cinza); margin-bottom: 6px; margin-top: 16px; }
+    .campo { width: 100%; padding: 12px 16px; border: 1.5px solid var(--borda); border-radius: 10px; font-size: 15px; color: var(--texto); background: #FAFAFA; outline: none; transition: border-color 0.2s; }
+    .campo:focus { border-color: var(--verde); background: white; }
+    .campo-select { appearance: none; background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%23607D8B' d='M6 8L1 3h10z'/%3E%3C/svg%3E"); background-repeat: no-repeat; background-position: right 14px center; padding-right: 36px; }
+
+    .btn-primary { width: 100%; padding: 14px; background: var(--verde); color: white; border: none; border-radius: 12px; font-size: 16px; font-weight: 600; cursor: pointer; margin-top: 24px; transition: background 0.2s; }
+    .btn-primary:hover { background: var(--verde-dark); }
+    .btn-primary:disabled { background: #BDBDBD; cursor: default; }
+    .btn-secondary { width: 100%; padding: 12px; background: white; color: var(--verde); border: 1.5px solid var(--verde); border-radius: 12px; font-size: 15px; font-weight: 600; cursor: pointer; margin-top: 10px; }
+    .link-btn { background: none; border: none; color: var(--verde); font-size: 14px; cursor: pointer; text-decoration: underline; margin-top: 16px; display: block; text-align: center; }
+
+    .msg-erro { background: var(--vermelho-bg); color: var(--vermelho); border-radius: 8px; padding: 10px 14px; font-size: 13px; margin-top: 12px; display: none; }
+    .msg-erro.visivel { display: block; }
+    .msg-info { background: var(--azul-bg); color: var(--azul); border-radius: 8px; padding: 10px 14px; font-size: 13px; margin-top: 12px; }
+
+    /* ── Pendente aprovação ── */
+    .pendente-box { text-align: center; padding: 32px 20px; }
+    .pendente-icon { font-size: 52px; margin-bottom: 16px; }
+    .pendente-titulo { font-size: 20px; font-weight: 700; color: var(--laranja); margin-bottom: 8px; }
+    .pendente-txt { color: var(--subtexto); font-size: 14px; line-height: 1.6; }
+
+    /* ── Badges ── */
+    .badge { display: inline-block; padding: 3px 10px; border-radius: 20px; font-size: 12px; font-weight: 600; }
+    .badge-aguardando { background: var(--laranja-bg); color: var(--laranja); }
+    .badge-retirado   { background: var(--verde-bg);   color: var(--verde-dark); }
+    .badge-devolvido  { background: var(--vermelho-bg); color: var(--vermelho); }
+    .badge-pendente   { background: var(--laranja-bg); color: var(--laranja); }
+    .badge-aprovado   { background: var(--verde-bg);   color: var(--verde-dark); }
+    .badge-rejeitado  { background: var(--vermelho-bg); color: var(--vermelho); }
+
+    /* ── Resumo ── */
+    .resumo { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 20px; }
+    .resumo-item { background: var(--branco); border-radius: 12px; padding: 16px; text-align: center; box-shadow: 0 1px 4px rgba(0,0,0,0.08); }
+    .resumo-num   { font-size: 28px; font-weight: 700; }
+    .resumo-label { font-size: 12px; color: var(--subtexto); margin-top: 4px; }
+    .num-laranja { color: var(--laranja); }
+    .num-verde   { color: var(--verde); }
+
+    /* ── Encomenda card ── */
+    .enc-card { background: var(--branco); border-radius: 12px; padding: 16px; margin-bottom: 12px; box-shadow: 0 1px 4px rgba(0,0,0,0.08); border-left: 4px solid var(--laranja); }
+    .enc-card.retirado  { border-left-color: var(--verde); opacity: 0.75; }
+    .enc-card.devolvido { border-left-color: var(--vermelho); opacity: 0.75; }
+    .enc-tipo { font-weight: 700; font-size: 15px; margin-bottom: 6px; display: flex; justify-content: space-between; align-items: center; }
+    .enc-info { font-size: 13px; color: var(--subtexto); margin-top: 4px; }
+    .enc-info span { color: var(--texto); font-weight: 500; }
+
+    /* ── Admin cards ── */
+    .admin-card { background: var(--branco); border-radius: 12px; padding: 16px; margin-bottom: 12px; box-shadow: 0 1px 4px rgba(0,0,0,0.08); }
+    .admin-card-nome { font-weight: 700; font-size: 15px; margin-bottom: 4px; }
+    .admin-card-info { font-size: 13px; color: var(--subtexto); margin-bottom: 10px; }
+    .admin-btns { display: flex; gap: 8px; }
+    .btn-aprovar  { flex: 1; padding: 8px; background: var(--verde); color: white; border: none; border-radius: 8px; font-size: 13px; font-weight: 600; cursor: pointer; }
+    .btn-rejeitar { flex: 1; padding: 8px; background: var(--vermelho-bg); color: var(--vermelho); border: 1px solid var(--vermelho); border-radius: 8px; font-size: 13px; font-weight: 600; cursor: pointer; }
+    .btn-revogar  { flex: 1; padding: 8px; background: var(--laranja-bg); color: var(--laranja); border: 1px solid var(--laranja); border-radius: 8px; font-size: 13px; font-weight: 600; cursor: pointer; }
+
+    /* ── Tabs ── */
+    .tabs { display: flex; background: white; border-radius: 12px; padding: 4px; margin-bottom: 20px; box-shadow: 0 1px 4px rgba(0,0,0,0.08); }
+    .tab { flex: 1; padding: 10px; text-align: center; border: none; background: none; border-radius: 10px; cursor: pointer; font-size: 13px; font-weight: 600; color: var(--subtexto); }
+    .tab.ativo { background: var(--verde); color: white; }
+
+    /* ── Perfil bar ── */
+    .perfil-bar { background: var(--verde-bg); border-radius: 12px; padding: 12px 16px; display: flex; align-items: center; gap: 12px; margin-bottom: 20px; }
+    .perfil-nome { font-weight: 700; font-size: 15px; }
+    .perfil-apto { font-size: 13px; color: var(--verde-dark); font-weight: 600; }
+
+    /* ── Admin header ── */
+    .admin-header { background: linear-gradient(135deg, #1565C0, #1976D2); color: white; border-radius: 12px; padding: 16px; margin-bottom: 20px; }
+    .admin-header h2 { font-size: 16px; font-weight: 700; }
+    .admin-header p  { font-size: 13px; opacity: 0.85; margin-top: 4px; }
+
+    .empty { text-align: center; padding: 40px 20px; color: var(--subtexto); }
+    .empty-icon { font-size: 48px; margin-bottom: 12px; }
+
+    .loading { text-align: center; padding: 40px; color: var(--cinza); }
+    .spinner { width: 36px; height: 36px; border: 3px solid var(--borda); border-top-color: var(--verde); border-radius: 50%; animation: spin 0.8s linear infinite; margin: 0 auto 12px; }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    .toast { position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%) translateY(80px); background: #333; color: white; padding: 12px 20px; border-radius: 24px; font-size: 14px; transition: transform 0.3s; z-index: 999; white-space: nowrap; }
+    .toast.show { transform: translateX(-50%) translateY(0); }
+
+    .secao-titulo { font-size: 14px; font-weight: 700; color: var(--cinza); text-transform: uppercase; letter-spacing: 0.5px; margin: 20px 0 10px; }
+  </style>
+</head>
+<body>
+
+<!-- HEADER -->
+<div class="header" id="header" style="display:none">
+  <div>
+    <div class="header-titulo">📦 Portaria Digital</div>
+    <div class="header-sub" id="header-sub">Encomendas do seu apartamento</div>
+  </div>
+  <button class="btn-sair" onclick="sair()">Sair</button>
+</div>
+
+<!-- TELA: LOGIN -->
+<div class="tela ativa" id="tela-login">
+  <div class="login-logo">🏢</div>
+  <div class="login-titulo">Portaria Digital</div>
+  <div class="login-sub">Acompanhe suas encomendas em tempo real</div>
+  <div class="card">
+    <label class="campo-label">E-mail</label>
+    <input class="campo" type="email" id="login-email" placeholder="seu@email.com" autocomplete="email"/>
+    <label class="campo-label">Senha</label>
+    <input class="campo" type="password" id="login-senha" placeholder="••••••••" autocomplete="current-password"/>
+    <div class="msg-erro" id="login-erro"></div>
+    <button class="btn-primary" id="btn-entrar" onclick="entrar()">Entrar</button>
+    <button class="link-btn" onclick="mostrarTela('tela-cadastro')">Não tem conta? Cadastre-se</button>
+  </div>
+</div>
+
+<!-- TELA: CADASTRO -->
+<div class="tela" id="tela-cadastro">
+  <div class="login-logo">📝</div>
+  <div class="login-titulo">Criar Conta</div>
+  <div class="login-sub">Após o cadastro, aguarde aprovação do síndico</div>
+  <div class="card">
+    <label class="campo-label">Seu nome completo</label>
+    <input class="campo" type="text" id="cad-nome" placeholder="Ex: Maria Silva"/>
+    <label class="campo-label">E-mail</label>
+    <input class="campo" type="email" id="cad-email" placeholder="seu@email.com"/>
+    <label class="campo-label">Senha (mínimo 6 caracteres)</label>
+    <input class="campo" type="password" id="cad-senha" placeholder="••••••••"/>
+    <label class="campo-label">Apartamento</label>
+    <select class="campo campo-select" id="cad-apto">
+      <option value="">Selecione seu apartamento...</option>
+    </select>
+    <div class="msg-info">🔒 Seu acesso será liberado pelo síndico após validação.</div>
+    <div class="msg-erro" id="cad-erro"></div>
+    <button class="btn-primary" id="btn-cadastrar" onclick="cadastrar()">Solicitar Cadastro</button>
+    <button class="link-btn" onclick="mostrarTela('tela-login')">Já tenho conta</button>
+  </div>
+</div>
+
+<!-- TELA: AGUARDANDO APROVAÇÃO -->
+<div class="tela" id="tela-pendente">
+  <div class="card">
+    <div class="pendente-box">
+      <div class="pendente-icon">⏳</div>
+      <div class="pendente-titulo">Cadastro em análise</div>
+      <div class="pendente-txt">Seu cadastro foi enviado e está aguardando aprovação do síndico.<br><br>Você receberá uma notificação assim que for aprovado. Em caso de dúvidas, contate a administração do condomínio.</div>
+    </div>
+    <button class="btn-secondary" onclick="sair()">Sair</button>
+  </div>
+</div>
+
+<!-- TELA: HOME MORADOR -->
+<div class="tela" id="tela-home">
+  <div class="perfil-bar">
+    <div style="font-size:28px">👤</div>
+    <div>
+      <div class="perfil-nome" id="perfil-nome">—</div>
+      <div class="perfil-apto" id="perfil-apto">Apto —</div>
+    </div>
+  </div>
+  <div class="resumo">
+    <div class="resumo-item">
+      <div class="resumo-num num-laranja" id="res-aguardando">—</div>
+      <div class="resumo-label">Aguardando</div>
+    </div>
+    <div class="resumo-item">
+      <div class="resumo-num num-verde" id="res-retiradas">—</div>
+      <div class="resumo-label">Retiradas</div>
+    </div>
+  </div>
+  <div class="tabs">
+    <button class="tab ativo" onclick="filtrar('aguardando',this)">📦 Pendentes</button>
+    <button class="tab"       onclick="filtrar('todas',this)">📋 Todas</button>
+  </div>
+  <div id="lista-encomendas">
+    <div class="loading"><div class="spinner"></div>Carregando...</div>
+  </div>
+</div>
+
+<!-- TELA: ADMIN -->
+<div class="tela" id="tela-admin">
+  <div class="admin-header">
+    <h2>🛡️ Painel do Administrador</h2>
+    <p>Gerencie cadastros e encomendas do condomínio</p>
+  </div>
+  <div class="tabs">
+    <button class="tab ativo" onclick="adminFiltrar('pendentes',this)">⏳ Pendentes</button>
+    <button class="tab"       onclick="adminFiltrar('aprovados',this)">✅ Aprovados</button>
+    <button class="tab"       onclick="adminFiltrar('encomendas',this)">📦 Encomendas</button>
+  </div>
+  <div id="admin-lista">
+    <div class="loading"><div class="spinner"></div>Carregando...</div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+// ══════════════════════════════════════════════════
+//  CREDENCIAIS FIREBASE — SUAS CREDENCIAIS REAIS
+// ══════════════════════════════════════════════════
+const firebaseConfig = {
+  apiKey:            "AIzaSyAgoXGf9Eyh3L4DLXwzRtNAq35PZpy748w",
+  authDomain:        "encomendas-condominio.firebaseapp.com",
+  projectId:         "encomendas-condominio",
+  storageBucket:     "encomendas-condominio.firebasestorage.app",
+  messagingSenderId: "568905816585",
+  appId:             "1:568905816585:web:ec1fd4fa78453247b136d8",
+};
+
+const VAPID_KEY = "BCATC79QJIaWHgoALhtWcTPBp3d3d0sa5xhvVtpz8jCAsLgS9jaYYu66cYIQxMJRS07nCZDkRI9PddC2JIZIFE";
+
+// ── Lista de apartamentos ────────────────────────
+const APTOS = [];
+for (let andar = 5; andar <= 21; andar++) {
+  for (let col = 1; col <= 8; col++) {
+    if ([3,4,5,6].includes(col) && andar === 21) continue;
+    APTOS.push(`${andar}0${col}`);
+  }
+}
+
+// ── Init Firebase ────────────────────────────────
+firebase.initializeApp(firebaseConfig);
+const auth = firebase.auth();
+const db   = firebase.firestore();
+let messaging = null;
+try { messaging = firebase.messaging(); } catch(e) {}
+
+// ── Preenche select de aptos ─────────────────────
+window.addEventListener("DOMContentLoaded", () => {
+  const sel = document.getElementById("cad-apto");
+  APTOS.forEach(ap => {
+    const o = document.createElement("option");
+    o.value = ap; o.textContent = `Apto ${ap}`;
+    sel.appendChild(o);
+  });
+});
+
+// ── Estado ───────────────────────────────────────
+let usuarioAtual = null;
+let perfilAtual  = null;
+let unsubscribe  = null;
+let filtroAtivo  = "aguardando";
+let adminFiltroAtivo = "pendentes";
+let todasEncomendas  = [];
+let todosMoradores   = [];
+let unsubAdmin = null;
+
+// ── Auth observer ────────────────────────────────
+auth.onAuthStateChanged(async user => {
+  if (user) {
+    usuarioAtual = user;
+    perfilAtual  = await buscarPerfil(user.uid);
+
+    if (!perfilAtual) {
+      mostrarTela("tela-cadastro");
+      return;
+    }
+
+    document.getElementById("header").style.display = "flex";
+
+    if (perfilAtual.role === "admin") {
+      document.getElementById("header-sub").textContent = "🛡️ Administrador";
+      mostrarTela("tela-admin");
+      iniciarEscutaAdmin();
+    } else if (perfilAtual.aprovado) {
+      document.getElementById("perfil-nome").textContent = perfilAtual.nome;
+      document.getElementById("perfil-apto").textContent = `Apartamento ${perfilAtual.apartamento}`;
+      document.getElementById("header-sub").textContent  = `Apto ${perfilAtual.apartamento}`;
+      mostrarTela("tela-home");
+      iniciarEscutaEncomendas();
+      solicitarPermissaoNotificacao();
+    } else {
+      document.getElementById("header-sub").textContent = "Cadastro pendente";
+      mostrarTela("tela-pendente");
+    }
+  } else {
+    usuarioAtual = null;
+    perfilAtual  = null;
+    document.getElementById("header").style.display = "none";
+    mostrarTela("tela-login");
+    if (unsubscribe) unsubscribe();
+    if (unsubAdmin)  unsubAdmin();
+  }
+});
+
+// ── Navegação ────────────────────────────────────
+function mostrarTela(id) {
+  document.querySelectorAll(".tela").forEach(t => t.classList.remove("ativa"));
+  document.getElementById(id).classList.add("ativa");
+}
+
+// ── Login ─────────────────────────────────────────
+async function entrar() {
+  const email = document.getElementById("login-email").value.trim();
+  const senha = document.getElementById("login-senha").value;
+  const btn   = document.getElementById("btn-entrar");
+  const erro  = document.getElementById("login-erro");
+  if (!email || !senha) { mostrarErro(erro, "Preencha e-mail e senha."); return; }
+  btn.disabled = true; btn.textContent = "Entrando...";
+  erro.classList.remove("visivel");
+  try {
+    await auth.signInWithEmailAndPassword(email, senha);
+  } catch(e) {
+    mostrarErro(erro, traduzirErro(e.code));
+    btn.disabled = false; btn.textContent = "Entrar";
+  }
+}
+
+// ── Cadastro ──────────────────────────────────────
+async function cadastrar() {
+  const nome  = document.getElementById("cad-nome").value.trim();
+  const email = document.getElementById("cad-email").value.trim();
+  const senha = document.getElementById("cad-senha").value;
+  const apto  = document.getElementById("cad-apto").value;
+  const btn   = document.getElementById("btn-cadastrar");
+  const erro  = document.getElementById("cad-erro");
+  if (!nome||!email||!senha||!apto) { mostrarErro(erro,"Preencha todos os campos."); return; }
+  if (senha.length < 6) { mostrarErro(erro,"Senha precisa ter no mínimo 6 caracteres."); return; }
+  btn.disabled = true; btn.textContent = "Enviando...";
+  erro.classList.remove("visivel");
+  try {
+    const cred = await auth.createUserWithEmailAndPassword(email, senha);
+    await db.collection("moradores").doc(cred.user.uid).set({
+      nome, email, apartamento: apto,
+      aprovado: false, role: "morador",
+      fcmToken: "", criadoEm: new Date(),
+    });
+    toast("✅ Solicitação enviada! Aguarde aprovação do síndico.");
+  } catch(e) {
+    mostrarErro(erro, traduzirErro(e.code));
+    btn.disabled = false; btn.textContent = "Solicitar Cadastro";
+  }
+}
+
+// ── Sair ──────────────────────────────────────────
+async function sair() {
+  if (unsubscribe) unsubscribe();
+  if (unsubAdmin)  unsubAdmin();
+  await auth.signOut();
+}
+
+// ── Perfil ────────────────────────────────────────
+async function buscarPerfil(uid) {
+  const doc = await db.collection("moradores").doc(uid).get();
+  return doc.exists ? { id: doc.id, ...doc.data() } : null;
+}
+
+// ══════════════════════════════════════════════════
+//  MORADOR — Encomendas
+// ══════════════════════════════════════════════════
+function iniciarEscutaEncomendas() {
+  if (unsubscribe) unsubscribe();
+  unsubscribe = db.collection("encomendas")
+    .where("apartamento", "==", perfilAtual.apartamento)
+    .orderBy("dataHora", "desc")
+    .limit(50)
+    .onSnapshot(snap => {
+      todasEncomendas = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+      renderizarEncomendas();
+      atualizarResumo();
+    });
+}
+
+function renderizarEncomendas() {
+  const lista = document.getElementById("lista-encomendas");
+  const filtradas = filtroAtivo === "aguardando"
+    ? todasEncomendas.filter(e => e.status === "Aguardando Retirada")
+    : todasEncomendas;
+
+  if (filtradas.length === 0) {
+    lista.innerHTML = `<div class="empty"><div class="empty-icon">${filtroAtivo==="aguardando"?"🎉":"📭"}</div><div>${filtroAtivo==="aguardando"?"Nenhuma encomenda pendente!":"Nenhuma encomenda registrada."}</div></div>`;
+    return;
+  }
+  lista.innerHTML = filtradas.map(enc => {
+    const sc = enc.status==="Retirado"?"retirado":enc.status==="Devolvido"?"devolvido":"";
+    const bc = enc.status==="Aguardando Retirada"?"badge-aguardando":enc.status==="Retirado"?"badge-retirado":"badge-devolvido";
+    const dt = enc.dataHora?.toDate ? enc.dataHora.toDate().toLocaleString("pt-BR") : enc.dataHora||"—";
+    return `<div class="enc-card ${sc}">
+      <div class="enc-tipo">📦 ${enc.tipo||"Encomenda"}<span class="badge ${bc}">${enc.status}</span></div>
+      <div class="enc-info">Remetente: <span>${enc.remetente||"Não informado"}</span></div>
+      <div class="enc-info">Chegada: <span>${dt}</span></div>
+      ${enc.destinatario?`<div class="enc-info">Destinatário: <span>${enc.destinatario}</span></div>`:""}
+    </div>`;
+  }).join("");
+}
+
+function atualizarResumo() {
+  document.getElementById("res-aguardando").textContent = todasEncomendas.filter(e=>e.status==="Aguardando Retirada").length;
+  document.getElementById("res-retiradas").textContent  = todasEncomendas.filter(e=>e.status==="Retirado").length;
+}
+
+function filtrar(tipo, btn) {
+  filtroAtivo = tipo;
+  document.querySelectorAll(".tab").forEach(t => t.classList.remove("ativo"));
+  btn.classList.add("ativo");
+  renderizarEncomendas();
+}
+
+// ══════════════════════════════════════════════════
+//  ADMIN — Painel
+// ══════════════════════════════════════════════════
+function iniciarEscutaAdmin() {
+  if (unsubAdmin) unsubAdmin();
+  unsubAdmin = db.collection("moradores")
+    .onSnapshot(snap => {
+      todosMoradores = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+      renderizarAdmin();
+    });
+}
+
+function adminFiltrar(tipo, btn) {
+  adminFiltroAtivo = tipo;
+  document.querySelectorAll(".tab").forEach(t => t.classList.remove("ativo"));
+  btn.classList.add("ativo");
+
+  if (tipo === "encomendas") {
+    carregarEncomendasAdmin();
+  } else {
+    renderizarAdmin();
+  }
+}
+
+function renderizarAdmin() {
+  const lista = document.getElementById("admin-lista");
+
+  if (adminFiltroAtivo === "pendentes") {
+    const pendentes = todosMoradores.filter(m => !m.aprovado && m.role !== "admin");
+    if (pendentes.length === 0) {
+      lista.innerHTML = `<div class="empty"><div class="empty-icon">✅</div><div>Nenhum cadastro pendente!</div></div>`;
+      return;
+    }
+    lista.innerHTML = `<div class="secao-titulo">Aguardando aprovação (${pendentes.length})</div>` +
+      pendentes.map(m => `
+        <div class="admin-card">
+          <div class="admin-card-nome">👤 ${m.nome}</div>
+          <div class="admin-card-info">📧 ${m.email}<br>🏠 Apto ${m.apartamento}</div>
+          <div class="admin-btns">
+            <button class="btn-aprovar"  onclick="aprovarMorador('${m.id}','${m.nome}')">✅ Aprovar</button>
+            <button class="btn-rejeitar" onclick="rejeitarMorador('${m.id}','${m.nome}')">❌ Rejeitar</button>
+          </div>
+        </div>`).join("");
+
+  } else if (adminFiltroAtivo === "aprovados") {
+    const aprovados = todosMoradores.filter(m => m.aprovado && m.role !== "admin");
+    if (aprovados.length === 0) {
+      lista.innerHTML = `<div class="empty"><div class="empty-icon">📭</div><div>Nenhum morador aprovado ainda.</div></div>`;
+      return;
+    }
+    lista.innerHTML = `<div class="secao-titulo">Moradores aprovados (${aprovados.length})</div>` +
+      aprovados.map(m => `
+        <div class="admin-card">
+          <div class="admin-card-nome">👤 ${m.nome} <span class="badge badge-aprovado">Aprovado</span></div>
+          <div class="admin-card-info">📧 ${m.email}<br>🏠 Apto ${m.apartamento}</div>
+          <div class="admin-btns">
+            <button class="btn-revogar" onclick="revogarMorador('${m.id}','${m.nome}')">🔄 Revogar acesso</button>
+          </div>
+        </div>`).join("");
+  }
+}
+
+async function carregarEncomendasAdmin() {
+  const lista = document.getElementById("admin-lista");
+  lista.innerHTML = `<div class="loading"><div class="spinner"></div>Carregando...</div>`;
+  const snap = await db.collection("encomendas").orderBy("dataHora","desc").limit(100).get();
+  const encs = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+  if (encs.length === 0) {
+    lista.innerHTML = `<div class="empty"><div class="empty-icon">📭</div><div>Nenhuma encomenda registrada.</div></div>`;
+    return;
+  }
+  lista.innerHTML = `<div class="secao-titulo">Últimas encomendas (${encs.length})</div>` +
+    encs.map(enc => {
+      const sc = enc.status==="Retirado"?"retirado":enc.status==="Devolvido"?"devolvido":"";
+      const bc = enc.status==="Aguardando Retirada"?"badge-aguardando":enc.status==="Retirado"?"badge-retirado":"badge-devolvido";
+      const dt = enc.dataHora?.toDate ? enc.dataHora.toDate().toLocaleString("pt-BR") : enc.dataHora||"—";
+      return `<div class="enc-card ${sc}">
+        <div class="enc-tipo">🏠 Apto ${enc.apartamento} — ${enc.tipo||"Encomenda"}<span class="badge ${bc}">${enc.status}</span></div>
+        <div class="enc-info">Remetente: <span>${enc.remetente||"—"}</span></div>
+        <div class="enc-info">Chegada: <span>${dt}</span></div>
+      </div>`;
+    }).join("");
+}
+
+async function aprovarMorador(uid, nome) {
+  if (!confirm(`Aprovar o cadastro de ${nome}?`)) return;
+  await db.collection("moradores").doc(uid).update({ aprovado: true });
+  toast(`✅ ${nome} aprovado com sucesso!`);
+}
+
+async function rejeitarMorador(uid, nome) {
+  if (!confirm(`Rejeitar e remover o cadastro de ${nome}?`)) return;
+  await db.collection("moradores").doc(uid).delete();
+  // Deleta o usuário do Auth via Cloud Function seria o ideal,
+  // mas por ora remove apenas o documento do Firestore
+  toast(`🗑️ Cadastro de ${nome} removido.`);
+}
+
+async function revogarMorador(uid, nome) {
+  if (!confirm(`Revogar o acesso de ${nome}? O cadastro voltará para pendente.`)) return;
+  await db.collection("moradores").doc(uid).update({ aprovado: false });
+  toast(`🔄 Acesso de ${nome} revogado.`);
+}
+
+// ══════════════════════════════════════════════════
+//  FCM — Notificações Push
+// ══════════════════════════════════════════════════
+async function solicitarPermissaoNotificacao() {
+  if (!messaging) return;
+  try {
+    const perm = await Notification.requestPermission();
+    if (perm === "granted") {
+      const token = await messaging.getToken({ vapidKey: VAPID_KEY });
+      if (token) {
+        await db.collection("moradores").doc(usuarioAtual.uid).update({ fcmToken: token });
+      }
+    }
+  } catch(e) { console.warn("Notificações:", e.message); }
+
+  if (messaging) {
+    messaging.onMessage(payload => {
+      toast(`📦 ${payload.notification.title}`);
+    });
+  }
+}
+
+// ── Helpers ───────────────────────────────────────
+function mostrarErro(el, msg) { el.textContent = msg; el.classList.add("visivel"); }
+
+function toast(msg, dur=3500) {
+  const t = document.getElementById("toast");
+  t.textContent = msg; t.classList.add("show");
+  setTimeout(() => t.classList.remove("show"), dur);
+}
+
+function traduzirErro(code) {
+  return {
+    "auth/user-not-found":       "E-mail não cadastrado.",
+    "auth/wrong-password":       "Senha incorreta.",
+    "auth/invalid-email":        "E-mail inválido.",
+    "auth/email-already-in-use": "Este e-mail já está em uso.",
+    "auth/weak-password":        "Senha fraca. Use pelo menos 6 caracteres.",
+    "auth/too-many-requests":    "Muitas tentativas. Aguarde.",
+    "auth/invalid-credential":   "E-mail ou senha incorretos.",
+  }[code] || "Erro inesperado. Tente novamente.";
+}
+
+if ("serviceWorker" in navigator) {
+  navigator.serviceWorker.register("firebase-messaging-sw.js").catch(()=>{});
+}
+</script>
+</body>
+</html>
