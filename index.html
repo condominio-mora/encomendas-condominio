@@ -131,6 +131,15 @@
     .toast.show { transform: translateX(-50%) translateY(0); }
 
     .secao-titulo { font-size: 14px; font-weight: 700; color: var(--cinza); text-transform: uppercase; letter-spacing: 0.5px; margin: 20px 0 10px; }
+
+    /* ── Botões tipo de acesso ── */
+    .btn-tipo { width: 100%; padding: 16px 20px; background: var(--verde-bg); border: 2px solid var(--verde-light); border-radius: 14px; cursor: pointer; text-align: left; display: flex; flex-direction: column; gap: 4px; transition: all 0.2s; }
+    .btn-tipo:hover { background: var(--verde-light); border-color: var(--verde); }
+    .btn-tipo { font-size: 17px; font-weight: 700; color: var(--verde-dark); }
+    .btn-tipo span { font-size: 13px; font-weight: 400; color: var(--subtexto); }
+    .btn-tipo.admin { background: var(--azul-bg); border-color: #90CAF9; }
+    .btn-tipo.admin:hover { background: #BBDEFB; border-color: var(--azul); }
+    .btn-tipo.admin { color: var(--azul); }
   </style>
 </head>
 <body>
@@ -156,14 +165,32 @@
     <input class="campo" type="password" id="login-senha" placeholder="••••••••" autocomplete="current-password"/>
     <div class="msg-erro" id="login-erro"></div>
     <button class="btn-primary" id="btn-entrar" onclick="entrar()">Entrar</button>
-    <button class="link-btn" onclick="mostrarTela('tela-cadastro')">Não tem conta? Cadastre-se</button>
+    <button class="link-btn" onclick="mostrarTela('tela-tipo-cadastro')">Não tem conta? Cadastre-se</button>
   </div>
 </div>
 
-<!-- TELA: CADASTRO -->
+<!-- TELA: TIPO DE CADASTRO -->
+<div class="tela" id="tela-tipo-cadastro">
+  <div class="login-logo">👥</div>
+  <div class="login-titulo">Tipo de Acesso</div>
+  <div class="login-sub">Como você vai usar o app?</div>
+  <div class="card">
+    <button class="btn-tipo" onclick="irParaCadastro('morador')">
+      🏠 Sou Morador
+      <span>Quero acompanhar minhas encomendas</span>
+    </button>
+    <button class="btn-tipo admin" onclick="irParaCadastro('admin')" style="margin-top:12px">
+      🛡️ Sou Administrador
+      <span>Síndico, zelador ou gerente do condomínio</span>
+    </button>
+    <button class="link-btn" onclick="mostrarTela('tela-login')">Já tenho conta</button>
+  </div>
+</div>
+
+<!-- TELA: CADASTRO MORADOR -->
 <div class="tela" id="tela-cadastro">
-  <div class="login-logo">📝</div>
-  <div class="login-titulo">Criar Conta</div>
+  <div class="login-logo">🏠</div>
+  <div class="login-titulo">Cadastro — Morador</div>
   <div class="login-sub">Após o cadastro, aguarde aprovação do síndico</div>
   <div class="card">
     <label class="campo-label">Seu nome completo</label>
@@ -175,12 +202,30 @@
     <label class="campo-label">Apartamento</label>
     <select class="campo campo-select" id="cad-apto">
       <option value="">Selecione seu apartamento...</option>
-      <option value="000">000 — Administrador (sem apartamento)</option>
     </select>
     <div class="msg-info">🔒 Seu acesso será liberado pelo síndico após validação.</div>
     <div class="msg-erro" id="cad-erro"></div>
     <button class="btn-primary" id="btn-cadastrar" onclick="cadastrar()">Solicitar Cadastro</button>
-    <button class="link-btn" onclick="mostrarTela('tela-login')">Já tenho conta</button>
+    <button class="link-btn" onclick="mostrarTela('tela-tipo-cadastro')">Voltar</button>
+  </div>
+</div>
+
+<!-- TELA: CADASTRO ADMIN -->
+<div class="tela" id="tela-cadastro-admin">
+  <div class="login-logo">🛡️</div>
+  <div class="login-titulo">Cadastro — Administrador</div>
+  <div class="login-sub">Após o cadastro, aguarde aprovação do síndico</div>
+  <div class="card">
+    <label class="campo-label">Seu nome completo</label>
+    <input class="campo" type="text" id="cadm-nome" placeholder="Ex: João Silva"/>
+    <label class="campo-label">E-mail</label>
+    <input class="campo" type="email" id="cadm-email" placeholder="seu@email.com"/>
+    <label class="campo-label">Senha (mínimo 6 caracteres)</label>
+    <input class="campo" type="password" id="cadm-senha" placeholder="••••••••"/>
+    <div class="msg-info">🔒 Seu acesso será liberado pelo síndico após validação.</div>
+    <div class="msg-erro" id="cadm-erro"></div>
+    <button class="btn-primary" id="btn-cadastrar-admin" onclick="cadastrarAdmin()">Solicitar Cadastro</button>
+    <button class="link-btn" onclick="mostrarTela('tela-tipo-cadastro')">Voltar</button>
   </div>
 </div>
 
@@ -353,6 +398,40 @@ auth.onAuthStateChanged(async user => {
 function mostrarTela(id) {
   document.querySelectorAll(".tela").forEach(t => t.classList.remove("ativa"));
   document.getElementById(id).classList.add("ativa");
+}
+
+// ── Direcionamento de cadastro ────────────────────
+function irParaCadastro(tipo) {
+  if (tipo === "admin") {
+    mostrarTela("tela-cadastro-admin");
+  } else {
+    mostrarTela("tela-cadastro");
+  }
+}
+
+// ── Cadastro Admin ────────────────────────────────
+async function cadastrarAdmin() {
+  const nome  = document.getElementById("cadm-nome").value.trim();
+  const email = document.getElementById("cadm-email").value.trim();
+  const senha = document.getElementById("cadm-senha").value;
+  const btn   = document.getElementById("btn-cadastrar-admin");
+  const erro  = document.getElementById("cadm-erro");
+  if (!nome||!email||!senha) { mostrarErro(erro,"Preencha todos os campos."); return; }
+  if (senha.length < 6) { mostrarErro(erro,"Senha precisa ter no mínimo 6 caracteres."); return; }
+  btn.disabled = true; btn.textContent = "Enviando...";
+  erro.classList.remove("visivel");
+  try {
+    const cred = await auth.createUserWithEmailAndPassword(email, senha);
+    await db.collection("moradores").doc(cred.user.uid).set({
+      nome, email, apartamento: "000",
+      aprovado: false, role: "morador",
+      fcmToken: "", criadoEm: new Date(),
+    });
+    toast("✅ Solicitação enviada! Aguarde aprovação do síndico.");
+  } catch(e) {
+    mostrarErro(erro, traduzirErro(e.code));
+    btn.disabled = false; btn.textContent = "Solicitar Cadastro";
+  }
 }
 
 // ── Login ─────────────────────────────────────────
