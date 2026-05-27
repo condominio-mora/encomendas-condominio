@@ -1,7 +1,7 @@
 {
-  "name": "Portaria Digital — Encomendas",
-  "short_name": "Encomendas",
-  "description": "Acompanhe suas encomendas na portaria do condomínio",
+  "name": "Portaria Digital do Vivendas",
+  "short_name": "Vivendas",
+  "description": "Portaria Digital do Condomínio Vivendas",
   "start_url": "/",
   "display": "standalone",
   "background_color": "#F1F8E9",
