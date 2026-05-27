@@ -464,6 +464,16 @@ async function cadastrar() {
   btn.disabled = true; btn.textContent = "Enviando...";
   erro.classList.remove("visivel");
   try {
+    // Verifica se o apartamento já está ocupado
+    const aptoSnap = await db.collection("moradores")
+      .where("apartamento", "==", apto)
+      .where("aprovado", "==", true)
+      .get();
+    if (!aptoSnap.empty) {
+      mostrarErro(erro, "⚠️ Este apartamento já possui um morador cadastrado. Se você é o novo morador, entre em contato com a administração do condomínio para liberar o acesso.");
+      btn.disabled = false; btn.textContent = "Solicitar Cadastro";
+      return;
+    }
     const cred = await auth.createUserWithEmailAndPassword(email, senha);
     await db.collection("moradores").doc(cred.user.uid).set({
       nome, email, apartamento: apto,
@@ -597,7 +607,8 @@ function renderizarAdmin() {
           <div class="admin-card-nome">👤 ${m.nome} <span class="badge badge-aprovado">Aprovado</span></div>
           <div class="admin-card-info">📧 ${m.email}<br>🏠 Apto ${m.apartamento}</div>
           <div class="admin-btns">
-            <button class="btn-revogar" onclick="revogarMorador('${m.id}','${m.nome}')">🔄 Revogar acesso</button>
+            <button class="btn-revogar" onclick="revogarMorador('${m.id}','${m.nome}','${m.apartamento}')">🔄 Revogar</button>
+            <button class="btn-rejeitar" onclick="removerMorador('${m.id}','${m.nome}','${m.apartamento}')">🗑️ Remover</button>
           </div>
         </div>`).join("");
   }
@@ -639,10 +650,16 @@ async function rejeitarMorador(uid, nome) {
   toast(`🗑️ Cadastro de ${nome} removido.`);
 }
 
-async function revogarMorador(uid, nome) {
-  if (!confirm(`Revogar o acesso de ${nome}? O cadastro voltará para pendente.`)) return;
+async function revogarMorador(uid, nome, apto) {
+  if (!confirm(`Revogar o acesso de ${nome} (Apto ${apto})? O cadastro voltará para pendente e o apartamento ficará disponível para novo morador.`)) return;
   await db.collection("moradores").doc(uid).update({ aprovado: false });
-  toast(`🔄 Acesso de ${nome} revogado.`);
+  toast(`🔄 Acesso de ${nome} revogado. Apto ${apto} liberado.`);
+}
+
+async function removerMorador(uid, nome, apto) {
+  if (!confirm(`⚠️ REMOVER PERMANENTEMENTE o cadastro de ${nome} (Apto ${apto})? Esta ação não pode ser desfeita!`)) return;
+  await db.collection("moradores").doc(uid).delete();
+  toast(`🗑️ Cadastro de ${nome} removido. Apto ${apto} liberado para novo morador.`);
 }
 
 // ══════════════════════════════════════════════════
