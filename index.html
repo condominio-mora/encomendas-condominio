@@ -175,6 +175,7 @@
     <label class="campo-label">Apartamento</label>
     <select class="campo campo-select" id="cad-apto">
       <option value="">Selecione seu apartamento...</option>
+      <option value="000">000 — Administrador (sem apartamento)</option>
     </select>
     <div class="msg-info">🔒 Seu acesso será liberado pelo síndico após validação.</div>
     <div class="msg-erro" id="cad-erro"></div>
@@ -275,6 +276,20 @@ try { messaging = firebase.messaging(); } catch(e) {}
 // ── Preenche select de aptos ─────────────────────
 window.addEventListener("DOMContentLoaded", () => {
   const sel = document.getElementById("cad-apto");
+
+  // Opção especial para administradores
+  const oAdm = document.createElement("option");
+  oAdm.value = "000";
+  oAdm.textContent = "🛡️ Administrador / Funcionário (sem apto)";
+  sel.appendChild(oAdm);
+
+  // Separador visual
+  const sep = document.createElement("option");
+  sep.disabled = true;
+  sep.textContent = "──────────────────────";
+  sel.appendChild(sep);
+
+  // Apartamentos dos moradores
   APTOS.forEach(ap => {
     const o = document.createElement("option");
     o.value = ap; o.textContent = `Apto ${ap}`;
@@ -311,11 +326,15 @@ auth.onAuthStateChanged(async user => {
       iniciarEscutaAdmin();
     } else if (perfilAtual.aprovado) {
       document.getElementById("perfil-nome").textContent = perfilAtual.nome;
-      document.getElementById("perfil-apto").textContent = `Apartamento ${perfilAtual.apartamento}`;
-      document.getElementById("header-sub").textContent  = `Apto ${perfilAtual.apartamento}`;
+      const aptoLabel = perfilAtual.apartamento === "000" ? "Administrador" : `Apartamento ${perfilAtual.apartamento}`;
+      const aptoHeader = perfilAtual.apartamento === "000" ? "Administrador" : `Apto ${perfilAtual.apartamento}`;
+      document.getElementById("perfil-apto").textContent = aptoLabel;
+      document.getElementById("header-sub").textContent  = aptoHeader;
       mostrarTela("tela-home");
-      iniciarEscutaEncomendas();
-      solicitarPermissaoNotificacao();
+      if (perfilAtual.apartamento !== "000") {
+        iniciarEscutaEncomendas();
+        solicitarPermissaoNotificacao();
+      }
     } else {
       document.getElementById("header-sub").textContent = "Cadastro pendente";
       mostrarTela("tela-pendente");
