@@ -351,7 +351,7 @@ auth.onAuthStateChanged(async user => {
 
     document.getElementById("header").style.display = "flex";
 
-    if (perfilAtual.role === "admin") {
+    if (perfilAtual.role === "admin" || perfilAtual.apartamento === "000") {
       document.getElementById("header-sub").textContent = "🛡️ Administrador";
       mostrarTela("tela-admin");
       iniciarEscutaAdmin();
