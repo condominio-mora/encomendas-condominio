@@ -444,6 +444,9 @@
         <span class="tipo-icon">📬</span>Outros
       </button>
     </div>
+    <div id="campo-outros-wrapper" style="display:none; margin-top:8px;">
+      <input class="campo" type="text" id="nova-tipo-outros" placeholder="Descreva o tipo de encomenda..."/>
+    </div>
 
     <label class="campo-label">Remetente</label>
     <div class="remetentes-grid">
@@ -658,6 +661,8 @@ function abrirModalNovaEncomenda() {
   document.getElementById("nova-erro").classList.remove("visivel");
   document.getElementById("btn-registrar").disabled = false;
   document.getElementById("btn-registrar").textContent = "📦 Registrar Encomenda";
+  document.getElementById("nova-tipo-outros").value = "";
+  document.getElementById("campo-outros-wrapper").style.display = "none";
   tipoSelecionado      = "Caixa/Pacote";
   remetenteSelecionado = "";
   // Reset UI
@@ -694,6 +699,12 @@ function selecionarTipo(btn, tipo) {
   tipoSelecionado = tipo;
   document.querySelectorAll(".btn-tipo-enc").forEach(b => b.classList.remove("ativo"));
   btn.classList.add("ativo");
+  // Mostra campo de texto só quando "Outros" for selecionado
+  const campoOutros = document.getElementById("campo-outros-wrapper");
+  campoOutros.style.display = tipo === "Outros" ? "block" : "none";
+  if (tipo === "Outros") {
+    document.getElementById("nova-tipo-outros").focus();
+  }
 }
 
 function selecionarRemetente(btn, nome) {
@@ -720,6 +731,16 @@ async function registrarEncomenda() {
   if (!apto) { mostrarErro(erro, "Informe o apartamento."); return; }
   if (!APTOS.includes(apto)) { mostrarErro(erro, "Apartamento inválido. Verifique o número."); return; }
 
+  // Se "Outros" foi selecionado, usa o texto digitado
+  const tipoFinal = tipoSelecionado === "Outros"
+    ? (document.getElementById("nova-tipo-outros").value.trim() || "Outros")
+    : tipoSelecionado;
+
+  if (tipoSelecionado === "Outros" && !document.getElementById("nova-tipo-outros").value.trim()) {
+    mostrarErro(erro, "Descreva o tipo de encomenda.");
+    return;
+  }
+
   btn.disabled = true; btn.textContent = "Registrando...";
   erro.classList.remove("visivel");
 
@@ -731,7 +752,7 @@ async function registrarEncomenda() {
     await db.collection("encomendas").doc(docId).set({
       apartamento:  apto,
       destinatario: destinatario,
-      tipo:         tipoSelecionado,
+      tipo:         tipoFinal,
       remetente:    remetente,
       porteiro:     perfilAtual.nome,
       dataHora:     dataFmt,
