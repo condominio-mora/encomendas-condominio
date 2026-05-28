@@ -520,7 +520,11 @@ function iniciarEscutaEncomendas() {
     .orderBy("dataHora", "desc")
     .limit(50)
     .onSnapshot(snap => {
+      const novas = snap.docChanges().filter(c => c.type === "added");
+      const anterior = todasEncomendas.length;
       todasEncomendas = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+      // Toca bip se chegou encomenda nova (não na carga inicial)
+      if (anterior > 0 && novas.length > 0) tocarBip();
       renderizarEncomendas();
       atualizarResumo();
     });
@@ -568,7 +572,11 @@ function iniciarEscutaAdmin() {
   if (unsubAdmin) unsubAdmin();
   unsubAdmin = db.collection("moradores")
     .onSnapshot(snap => {
+      const anterior = todosMoradores.filter(m => !m.aprovado && m.role !== "admin").length;
       todosMoradores = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+      const novos = todosMoradores.filter(m => !m.aprovado && m.role !== "admin").length;
+      // Toca bip se chegou novo cadastro pendente (não na carga inicial)
+      if (anterior > 0 && novos > anterior) tocarBip();
       renderizarAdmin();
     });
 }
@@ -819,6 +827,34 @@ async function executarLimpezaEncomendas() {
   }
   toast(`🗑️ ${ok} encomenda(s) removida(s)!`);
   await renderizarLimpeza();
+}
+
+// ══════════════════════════════════════════════════
+//  SOM — Bip de notificação
+// ══════════════════════════════════════════════════
+function tocarBip() {
+  try {
+    const ctx = new (window.AudioContext || window.webkitAudioContext)();
+
+    function nota(freq, inicio, dur, vol=0.6) {
+      const osc  = ctx.createOscillator();
+      const gain = ctx.createGain();
+      osc.connect(gain);
+      gain.connect(ctx.destination);
+      osc.type = "sine";
+      osc.frequency.setValueAtTime(freq, ctx.currentTime + inicio);
+      gain.gain.setValueAtTime(0, ctx.currentTime + inicio);
+      gain.gain.linearRampToValueAtTime(vol, ctx.currentTime + inicio + 0.01);
+      gain.gain.linearRampToValueAtTime(0, ctx.currentTime + inicio + dur);
+      osc.start(ctx.currentTime + inicio);
+      osc.stop(ctx.currentTime + inicio + dur + 0.05);
+    }
+
+    // Três bips ascendentes bem audíveis
+    nota(880, 0.0,  0.15);
+    nota(1100, 0.18, 0.15);
+    nota(1320, 0.36, 0.25);
+  } catch(e) { console.warn("Som não suportado:", e); }
 }
 
 // ══════════════════════════════════════════════════
