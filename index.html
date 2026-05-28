@@ -132,6 +132,25 @@
 
     .secao-titulo { font-size: 14px; font-weight: 700; color: var(--cinza); text-transform: uppercase; letter-spacing: 0.5px; margin: 20px 0 10px; }
 
+    /* ── Limpeza ── */
+    .limpeza-header { background: linear-gradient(135deg, #4A148C, #6A1B9A); color: white; border-radius: 12px; padding: 16px; margin-bottom: 16px; }
+    .limpeza-header h3 { font-size: 15px; font-weight: 700; }
+    .limpeza-header p  { font-size: 13px; opacity: 0.85; margin-top: 4px; }
+    .limpeza-secao { background: white; border-radius: 12px; padding: 16px; margin-bottom: 16px; box-shadow: 0 1px 4px rgba(0,0,0,0.08); }
+    .limpeza-secao-titulo { font-size: 14px; font-weight: 700; color: var(--cinza); text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 12px; display: flex; justify-content: space-between; align-items: center; }
+    .limpeza-item { display: flex; align-items: flex-start; gap: 12px; padding: 12px 0; border-bottom: 1px solid var(--borda); }
+    .limpeza-item:last-child { border-bottom: none; padding-bottom: 0; }
+    .limpeza-item input[type="checkbox"] { width: 20px; height: 20px; margin-top: 2px; accent-color: var(--vermelho); cursor: pointer; flex-shrink: 0; }
+    .limpeza-item-info { flex: 1; }
+    .limpeza-item-nome { font-weight: 600; font-size: 14px; }
+    .limpeza-item-detalhe { font-size: 12px; color: var(--subtexto); margin-top: 3px; }
+    .btn-limpar { width: 100%; padding: 13px; background: var(--vermelho); color: white; border: none; border-radius: 12px; font-size: 15px; font-weight: 700; cursor: pointer; margin-top: 16px; }
+    .btn-limpar:disabled { background: #BDBDBD; cursor: default; }
+    .btn-selecionar-todos { background: none; border: none; color: var(--vermelho); font-size: 12px; font-weight: 600; cursor: pointer; }
+    .limpeza-tabs { display: flex; background: #F3E5F5; border-radius: 10px; padding: 4px; margin-bottom: 16px; }
+    .limpeza-tab { flex: 1; padding: 9px; text-align: center; border: none; background: none; border-radius: 8px; cursor: pointer; font-size: 13px; font-weight: 600; color: #6A1B9A; }
+    .limpeza-tab.ativo { background: #6A1B9A; color: white; }
+
     /* ── Botões tipo de acesso ── */
     .btn-tipo { width: 100%; padding: 16px 20px; background: var(--verde-bg); border: 2px solid var(--verde-light); border-radius: 14px; cursor: pointer; text-align: left; display: flex; flex-direction: column; gap: 4px; transition: all 0.2s; }
     .btn-tipo:hover { background: var(--verde-light); border-color: var(--verde); }
@@ -274,10 +293,11 @@
     <h2>🛡️ Painel do Administrador</h2>
     <p>Gerencie cadastros e encomendas do condomínio</p>
   </div>
-  <div class="tabs">
+  <div class="tabs" id="admin-tabs">
     <button class="tab ativo" onclick="adminFiltrar('pendentes',this)">⏳ Pendentes</button>
     <button class="tab"       onclick="adminFiltrar('aprovados',this)">✅ Aprovados</button>
     <button class="tab"       onclick="adminFiltrar('encomendas',this)">📦 Encomendas</button>
+    <button class="tab tab-limpeza" id="tab-limpeza" style="display:none" onclick="adminFiltrar('limpeza',this)">🧹 Limpeza</button>
   </div>
   <div id="admin-lista">
     <div class="loading"><div class="spinner"></div>Carregando...</div>
@@ -355,6 +375,10 @@ auth.onAuthStateChanged(async user => {
       document.getElementById("header-sub").textContent = "🛡️ Administrador";
       mostrarTela("tela-admin");
       iniciarEscutaAdmin();
+      // Aba limpeza só para o admin master (role=admin)
+      if (perfilAtual.role === "admin") {
+        document.getElementById("tab-limpeza").style.display = "";
+      }
     } else if (perfilAtual.aprovado) {
       document.getElementById("perfil-nome").textContent = perfilAtual.nome;
       const aptoLabel = perfilAtual.apartamento === "000" ? "Administrador" : `Apartamento ${perfilAtual.apartamento}`;
@@ -556,6 +580,8 @@ function adminFiltrar(tipo, btn) {
 
   if (tipo === "encomendas") {
     carregarEncomendasAdmin();
+  } else if (tipo === "limpeza") {
+    carregarLimpeza();
   } else {
     renderizarAdmin();
   }
@@ -656,6 +682,143 @@ async function removerMorador(uid, nome, apto) {
   if (!confirm(`⚠️ REMOVER PERMANENTEMENTE o cadastro de ${nome} (Apto ${apto})? Esta ação não pode ser desfeita!`)) return;
   await db.collection("moradores").doc(uid).delete();
   toast(`🗑️ Cadastro de ${nome} removido. Apto ${apto} liberado para novo morador.`);
+}
+
+// ══════════════════════════════════════════════════
+//  LIMPEZA — Admin Master
+// ══════════════════════════════════════════════════
+let limpezaFiltroAtivo = "cadastros";
+
+async function carregarLimpeza() {
+  const lista = document.getElementById("admin-lista");
+  lista.innerHTML = `
+    <div class="limpeza-header">
+      <h3>🧹 Limpeza de Registros de Teste</h3>
+      <p>Selecione os registros que deseja resetar ou remover</p>
+    </div>
+    <div class="limpeza-tabs">
+      <button class="limpeza-tab ativo" onclick="limpezaFiltrar('cadastros',this)">👤 Cadastros</button>
+      <button class="limpeza-tab"       onclick="limpezaFiltrar('encomendas',this)">📦 Encomendas</button>
+    </div>
+    <div id="limpeza-conteudo"><div class="loading"><div class="spinner"></div>Carregando...</div></div>
+  `;
+  limpezaFiltroAtivo = "cadastros";
+  await renderizarLimpeza();
+}
+
+function limpezaFiltrar(tipo, btn) {
+  limpezaFiltroAtivo = tipo;
+  document.querySelectorAll(".limpeza-tab").forEach(t => t.classList.remove("ativo"));
+  btn.classList.add("ativo");
+  renderizarLimpeza();
+}
+
+async function renderizarLimpeza() {
+  const conteudo = document.getElementById("limpeza-conteudo");
+  if (!conteudo) return;
+
+  if (limpezaFiltroAtivo === "cadastros") {
+    // Admins 000 cadastrados pelo app (role=morador, apartamento=000), exceto o próprio master
+    const admins000 = todosMoradores.filter(m =>
+      m.apartamento === "000" && m.role !== "admin" && m.id !== usuarioAtual.uid
+    );
+    if (admins000.length === 0) {
+      conteudo.innerHTML = `<div class="empty"><div class="empty-icon">✅</div><div>Nenhum cadastro de admin 000 para limpar.</div></div>`;
+      return;
+    }
+    conteudo.innerHTML = `
+      <div class="limpeza-secao">
+        <div class="limpeza-secao-titulo">
+          Admins 000 (${admins000.length})
+          <button class="btn-selecionar-todos" onclick="selecionarTodos('chk-cad')">Selecionar todos</button>
+        </div>
+        ${admins000.map(m => `
+          <div class="limpeza-item">
+            <input type="checkbox" id="chk-cad-${m.id}" class="chk-cad" value="${m.id}"/>
+            <div class="limpeza-item-info">
+              <div class="limpeza-item-nome">👤 ${m.nome}</div>
+              <div class="limpeza-item-detalhe">📧 ${m.email} · ${m.aprovado ? "✅ Aprovado" : "⏳ Pendente"}</div>
+            </div>
+          </div>`).join("")}
+      </div>
+      <button class="btn-limpar" onclick="executarLimpezaCadastros()">🧹 Resetar Selecionados</button>
+      <p style="font-size:12px;color:var(--subtexto);margin-top:8px;text-align:center">O cadastro será zerado — o e-mail continua disponível para novo cadastro como morador.</p>
+    `;
+  } else {
+    // Encomendas
+    const snap = await db.collection("encomendas").orderBy("dataHora","desc").limit(200).get();
+    const encs = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+    if (encs.length === 0) {
+      conteudo.innerHTML = `<div class="empty"><div class="empty-icon">📭</div><div>Nenhuma encomenda registrada.</div></div>`;
+      return;
+    }
+    conteudo.innerHTML = `
+      <div class="limpeza-secao">
+        <div class="limpeza-secao-titulo">
+          Encomendas (${encs.length})
+          <button class="btn-selecionar-todos" onclick="selecionarTodos('chk-enc')">Selecionar todas</button>
+        </div>
+        ${encs.map(enc => {
+          const dt = enc.dataHora?.toDate ? enc.dataHora.toDate().toLocaleString("pt-BR") : enc.dataHora||"—";
+          return `
+          <div class="limpeza-item">
+            <input type="checkbox" id="chk-enc-${enc.id}" class="chk-enc" value="${enc.id}"/>
+            <div class="limpeza-item-info">
+              <div class="limpeza-item-nome">🏠 Apto ${enc.apartamento} — ${enc.tipo||"Encomenda"}</div>
+              <div class="limpeza-item-detalhe">${enc.status} · ${dt}</div>
+            </div>
+          </div>`;
+        }).join("")}
+      </div>
+      <button class="btn-limpar" onclick="executarLimpezaEncomendas()">🗑️ Remover Selecionadas</button>
+    `;
+  }
+}
+
+function selecionarTodos(classe) {
+  const checks = document.querySelectorAll(`.${classe}`);
+  const todosChecados = Array.from(checks).every(c => c.checked);
+  checks.forEach(c => c.checked = !todosChecados);
+}
+
+async function executarLimpezaCadastros() {
+  const selecionados = Array.from(document.querySelectorAll(".chk-cad:checked")).map(c => c.value);
+  if (selecionados.length === 0) { toast("⚠️ Selecione pelo menos um cadastro."); return; }
+  if (!confirm(`Resetar ${selecionados.length} cadastro(s)? Os e-mails ficam disponíveis para novo cadastro como morador.`)) return;
+
+  const btn = document.querySelector(".btn-limpar");
+  btn.disabled = true; btn.textContent = "Processando...";
+
+  let ok = 0;
+  for (const uid of selecionados) {
+    try {
+      await db.collection("moradores").doc(uid).update({
+        apartamento: "", aprovado: false, role: "morador"
+      });
+      ok++;
+    } catch(e) { console.warn("Erro ao resetar", uid, e); }
+  }
+  toast(`✅ ${ok} cadastro(s) resetado(s) com sucesso!`);
+  await renderizarLimpeza();
+}
+
+async function executarLimpezaEncomendas() {
+  const selecionados = Array.from(document.querySelectorAll(".chk-enc:checked")).map(c => c.value);
+  if (selecionados.length === 0) { toast("⚠️ Selecione pelo menos uma encomenda."); return; }
+  if (!confirm(`Remover ${selecionados.length} encomenda(s) permanentemente?`)) return;
+
+  const btn = document.querySelector(".btn-limpar");
+  btn.disabled = true; btn.textContent = "Processando...";
+
+  let ok = 0;
+  for (const id of selecionados) {
+    try {
+      await db.collection("encomendas").doc(id).delete();
+      ok++;
+    } catch(e) { console.warn("Erro ao deletar encomenda", id, e); }
+  }
+  toast(`🗑️ ${ok} encomenda(s) removida(s)!`);
+  await renderizarLimpeza();
 }
 
 // ══════════════════════════════════════════════════
