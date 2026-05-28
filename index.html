@@ -358,6 +358,8 @@ let adminFiltroAtivo = "pendentes";
 let todasEncomendas  = [];
 let todosMoradores   = [];
 let unsubAdmin = null;
+let unsubPorteiros = null;
+let todosPorteiros = [];
 
 // ── Auth observer ────────────────────────────────
 auth.onAuthStateChanged(async user => {
@@ -376,6 +378,7 @@ auth.onAuthStateChanged(async user => {
       document.getElementById("header-sub").textContent = "🛡️ Administrador";
       mostrarTela("tela-admin");
       iniciarEscutaAdmin();
+      iniciarEscutaPorteiros();
       // Aba limpeza só para o admin master (role=admin)
       if (perfilAtual.role === "admin") {
         document.getElementById("tab-limpeza").style.display = "";
@@ -400,8 +403,9 @@ auth.onAuthStateChanged(async user => {
     perfilAtual  = null;
     document.getElementById("header").style.display = "none";
     mostrarTela("tela-login");
-    if (unsubscribe) unsubscribe();
-    if (unsubAdmin)  unsubAdmin();
+    if (unsubscribe)   unsubscribe();
+    if (unsubAdmin)    unsubAdmin();
+    if (unsubPorteiros) unsubPorteiros();
   }
 });
 
@@ -550,6 +554,7 @@ function renderizarEncomendas() {
       <div class="enc-info">Remetente: <span>${enc.remetente||"Não informado"}</span></div>
       <div class="enc-info">Chegada: <span>${dt}</span></div>
       ${enc.destinatario?`<div class="enc-info">Destinatário: <span>${enc.destinatario}</span></div>`:""}
+      ${enc.porteiro?`<div class="enc-info">Porteiro: <span>${enc.porteiro}</span></div>`:""}
     </div>`;
   }).join("");
 }
@@ -576,9 +581,33 @@ function iniciarEscutaAdmin() {
       const anterior = todosMoradores.filter(m => !m.aprovado && m.role !== "admin").length;
       todosMoradores = snap.docs.map(d => ({ id: d.id, ...d.data() }));
       const novos = todosMoradores.filter(m => !m.aprovado && m.role !== "admin").length;
-      // Toca bip se chegou novo cadastro pendente (não na carga inicial)
       if (anterior > 0 && novos > anterior) tocarBip();
       renderizarAdmin();
+    });
+}
+
+function iniciarEscutaPorteiros() {
+  if (unsubPorteiros) unsubPorteiros();
+  unsubPorteiros = db.collection("porteiros")
+    .onSnapshot(snap => {
+      const anterior = todosPorteiros.filter(p => !p.aprovado).length;
+      todosPorteiros = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+      const novos = todosPorteiros.filter(p => !p.aprovado).length;
+      // Toca bip e mostra badge se chegou novo porteiro pendente
+      if (anterior > 0 && novos > anterior) {
+        tocarBip();
+        toast("🔑 Novo porteiro aguardando aprovação!");
+      }
+      // Atualiza badge na aba porteiros
+      const tabPorteiros = document.querySelector('[onclick*="porteiros"]');
+      if (tabPorteiros) {
+        const pendentes = todosPorteiros.filter(p => !p.aprovado).length;
+        tabPorteiros.textContent = pendentes > 0
+          ? `🔑 Porteiros (${pendentes})`
+          : "🔑 Porteiros";
+      }
+      // Se a aba porteiros estiver ativa, recarrega
+      if (adminFiltroAtivo === "porteiros") carregarPorteiros();
     });
 }
 
@@ -642,7 +671,7 @@ function renderizarAdmin() {
 async function carregarEncomendasAdmin() {
   const lista = document.getElementById("admin-lista");
   lista.innerHTML = `<div class="loading"><div class="spinner"></div>Carregando...</div>`;
-  const snap = await db.collection("encomendas").orderBy("dataHora","desc").limit(100).get();
+  const snap = await db.collection("encomendas").orderBy("criadoEm","desc").limit(100).get();
   const encs = snap.docs.map(d => ({ id: d.id, ...d.data() }));
   if (encs.length === 0) {
     lista.innerHTML = `<div class="empty"><div class="empty-icon">📭</div><div>Nenhuma encomenda registrada.</div></div>`;
@@ -657,6 +686,8 @@ async function carregarEncomendasAdmin() {
         <div class="enc-tipo">🏠 Apto ${enc.apartamento} — ${enc.tipo||"Encomenda"}<span class="badge ${bc}">${enc.status}</span></div>
         <div class="enc-info">Remetente: <span>${enc.remetente||"—"}</span></div>
         <div class="enc-info">Chegada: <span>${dt}</span></div>
+        ${enc.porteiro?`<div class="enc-info">Porteiro: <span>${enc.porteiro}</span></div>`:""}
+        ${enc.destinatario?`<div class="enc-info">Destinatário: <span>${enc.destinatario}</span></div>`:""}
       </div>`;
     }).join("");
 }
