@@ -200,9 +200,8 @@
     <label class="campo-label">Senha (mínimo 6 caracteres)</label>
     <input class="campo" type="password" id="cad-senha" placeholder="••••••••"/>
     <label class="campo-label">Apartamento</label>
-    <select class="campo campo-select" id="cad-apto">
-      <option value="">Selecione seu apartamento...</option>
-    </select>
+    <input class="campo" type="text" id="cad-apto" placeholder="Digite ou selecione o número do apto..." list="lista-aptos" autocomplete="off"/>
+    <datalist id="lista-aptos"></datalist>
     <div class="msg-info">🔒 Seu acesso será liberado pelo síndico após validação.</div>
     <div class="msg-erro" id="cad-erro"></div>
     <button class="btn-primary" id="btn-cadastrar" onclick="cadastrar()">Solicitar Cadastro</button>
@@ -318,27 +317,14 @@ const db   = firebase.firestore();
 let messaging = null;
 try { messaging = firebase.messaging(); } catch(e) {}
 
-// ── Preenche select de aptos ─────────────────────
+// ── Preenche datalist de aptos ───────────────────
 window.addEventListener("DOMContentLoaded", () => {
-  const sel = document.getElementById("cad-apto");
-
-  // Opção especial para administradores
-  const oAdm = document.createElement("option");
-  oAdm.value = "000";
-  oAdm.textContent = "🛡️ Administrador / Funcionário (sem apto)";
-  sel.appendChild(oAdm);
-
-  // Separador visual
-  const sep = document.createElement("option");
-  sep.disabled = true;
-  sep.textContent = "──────────────────────";
-  sel.appendChild(sep);
-
-  // Apartamentos dos moradores
+  const dl = document.getElementById("lista-aptos");
+  // Só lista os aptos reais — 007 e 000 NÃO aparecem aqui
   APTOS.forEach(ap => {
     const o = document.createElement("option");
-    o.value = ap; o.textContent = `Apto ${ap}`;
-    sel.appendChild(o);
+    o.value = ap;
+    dl.appendChild(o);
   });
 });
 
@@ -588,9 +574,9 @@ function renderizarAdmin() {
       pendentes.map(m => `
         <div class="admin-card">
           <div class="admin-card-nome">👤 ${m.nome}</div>
-          <div class="admin-card-info">📧 ${m.email}<br>🏠 Apto ${m.apartamento}</div>
+          <div class="admin-card-info">📧 ${m.email}<br>${m.apartamento === "000" ? "🛡️ <b>Administrador</b>" : "🏠 Apto " + m.apartamento}</div>
           <div class="admin-btns">
-            <button class="btn-aprovar"  onclick="aprovarMorador('${m.id}','${m.nome}')">✅ Aprovar</button>
+            <button class="btn-aprovar"  onclick="aprovarMorador('${m.id}','${m.nome}','${m.apartamento}')">✅ Aprovar</button>
             <button class="btn-rejeitar" onclick="rejeitarMorador('${m.id}','${m.nome}')">❌ Rejeitar</button>
           </div>
         </div>`).join("");
@@ -636,10 +622,18 @@ async function carregarEncomendasAdmin() {
     }).join("");
 }
 
-async function aprovarMorador(uid, nome) {
+async function aprovarMorador(uid, nome, apto) {
   if (!confirm(`Aprovar o cadastro de ${nome}?`)) return;
-  await db.collection("moradores").doc(uid).update({ aprovado: true });
-  toast(`✅ ${nome} aprovado com sucesso!`);
+  const updates = { aprovado: true };
+  // Se apto 000, promove automaticamente para admin
+  if (apto === "000") {
+    updates.role = "admin";
+  }
+  await db.collection("moradores").doc(uid).update(updates);
+  const msg = apto === "000"
+    ? `✅ ${nome} aprovado como Administrador!`
+    : `✅ ${nome} aprovado com sucesso!`;
+  toast(msg);
 }
 
 async function rejeitarMorador(uid, nome) {
