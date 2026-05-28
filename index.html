@@ -565,8 +565,8 @@ function renderizarAdmin() {
   const lista = document.getElementById("admin-lista");
 
   if (adminFiltroAtivo === "pendentes") {
-    // Mostra todos não aprovados, exceto o próprio admin logado
-    const pendentes = todosMoradores.filter(m => !m.aprovado && m.id !== usuarioAtual.uid);
+    // Mostra pendentes: exclui o próprio admin logado e quem tem role=admin (promovido manualmente)
+    const pendentes = todosMoradores.filter(m => !m.aprovado && m.id !== usuarioAtual.uid && m.role !== "admin");
     if (pendentes.length === 0) {
       lista.innerHTML = `<div class="empty"><div class="empty-icon">✅</div><div>Nenhum cadastro pendente!</div></div>`;
       return;
@@ -583,8 +583,8 @@ function renderizarAdmin() {
         </div>`).join("");
 
   } else if (adminFiltroAtivo === "aprovados") {
-    // Mostra todos aprovados, exceto o próprio admin logado (para não se revogar)
-    const aprovados = todosMoradores.filter(m => m.aprovado && m.id !== usuarioAtual.uid);
+    // Mostra aprovados: exclui o próprio admin logado e quem tem role=admin (promovido manualmente)
+    const aprovados = todosMoradores.filter(m => m.aprovado && m.id !== usuarioAtual.uid && m.role !== "admin");
     if (aprovados.length === 0) {
       lista.innerHTML = `<div class="empty"><div class="empty-icon">📭</div><div>Nenhum morador aprovado ainda.</div></div>`;
       return;
