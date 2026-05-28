@@ -624,13 +624,17 @@ function iniciarEscuta() {
   if (unsubscribe) unsubscribe();
   unsubscribe = db.collection("encomendas")
     .where("status", "==", "Aguardando Retirada")
-    .orderBy("dataHora", "desc")
     .onSnapshot(snap => {
+      console.log("Encomendas snapshot:", snap.docs.length, "docs");
       const anterior = todasEncomendas.length;
       todasEncomendas = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+      console.log("Encomendas carregadas:", todasEncomendas);
       document.getElementById("contador-pendentes").textContent = todasEncomendas.length;
       renderizarPendentes();
       if (anterior > 0 && todasEncomendas.length > anterior) tocarBip();
+    }, err => {
+      console.error("Erro na escuta:", err);
+      toast("❌ Erro ao carregar encomendas: " + err.message);
     });
 }
 
