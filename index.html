@@ -297,6 +297,7 @@
     <button class="tab ativo" onclick="adminFiltrar('pendentes',this)">⏳ Pendentes</button>
     <button class="tab"       onclick="adminFiltrar('aprovados',this)">✅ Aprovados</button>
     <button class="tab"       onclick="adminFiltrar('encomendas',this)">📦 Encomendas</button>
+    <button class="tab"       onclick="adminFiltrar('porteiros',this)">🔑 Porteiros</button>
     <button class="tab tab-limpeza" id="tab-limpeza" style="display:none" onclick="adminFiltrar('limpeza',this)">🧹 Limpeza</button>
   </div>
   <div id="admin-lista">
@@ -590,6 +591,8 @@ function adminFiltrar(tipo, btn) {
     carregarEncomendasAdmin();
   } else if (tipo === "limpeza") {
     carregarLimpeza();
+  } else if (tipo === "porteiros") {
+    carregarPorteiros();
   } else {
     renderizarAdmin();
   }
@@ -690,6 +693,82 @@ async function removerMorador(uid, nome, apto) {
   if (!confirm(`⚠️ REMOVER PERMANENTEMENTE o cadastro de ${nome} (Apto ${apto})? Esta ação não pode ser desfeita!`)) return;
   await db.collection("moradores").doc(uid).delete();
   toast(`🗑️ Cadastro de ${nome} removido. Apto ${apto} liberado para novo morador.`);
+}
+
+// ══════════════════════════════════════════════════
+//  PORTEIROS — Painel
+// ══════════════════════════════════════════════════
+async function carregarPorteiros() {
+  const lista = document.getElementById("admin-lista");
+  lista.innerHTML = `<div class="loading"><div class="spinner"></div>Carregando...</div>`;
+  const snap = await db.collection("porteiros").get();
+  const porteiros = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+
+  const pendentes = porteiros.filter(p => !p.aprovado);
+  const aprovados = porteiros.filter(p => p.aprovado);
+
+  if (porteiros.length === 0) {
+    lista.innerHTML = `<div class="empty"><div class="empty-icon">🔑</div><div>Nenhum porteiro cadastrado ainda.</div></div>`;
+    return;
+  }
+
+  let html = "";
+
+  if (pendentes.length > 0) {
+    html += `<div class="secao-titulo">Aguardando aprovação (${pendentes.length})</div>`;
+    html += pendentes.map(p => `
+      <div class="admin-card">
+        <div class="admin-card-nome">👷 ${p.nome}</div>
+        <div class="admin-card-info">📧 ${p.email}<br>🔑 Porteiro</div>
+        <div class="admin-btns">
+          <button class="btn-aprovar"  onclick="aprovarPorteiro('${p.id}','${p.nome}')">✅ Aprovar</button>
+          <button class="btn-rejeitar" onclick="rejeitarPorteiro('${p.id}','${p.nome}')">❌ Rejeitar</button>
+        </div>
+      </div>`).join("");
+  }
+
+  if (aprovados.length > 0) {
+    html += `<div class="secao-titulo">Porteiros ativos (${aprovados.length})</div>`;
+    html += aprovados.map(p => `
+      <div class="admin-card">
+        <div class="admin-card-nome">👷 ${p.nome} <span class="badge badge-aprovado">Ativo</span></div>
+        <div class="admin-card-info">📧 ${p.email}<br>🔑 Porteiro</div>
+        <div class="admin-btns">
+          <button class="btn-revogar" onclick="revogarPorteiro('${p.id}','${p.nome}')">🔄 Revogar</button>
+          <button class="btn-rejeitar" onclick="removerPorteiro('${p.id}','${p.nome}')">🗑️ Remover</button>
+        </div>
+      </div>`).join("");
+  }
+
+  lista.innerHTML = html;
+}
+
+async function aprovarPorteiro(uid, nome) {
+  if (!confirm(`Aprovar o porteiro ${nome}?`)) return;
+  await db.collection("porteiros").doc(uid).update({ aprovado: true });
+  toast(`✅ ${nome} aprovado como porteiro!`);
+  carregarPorteiros();
+}
+
+async function rejeitarPorteiro(uid, nome) {
+  if (!confirm(`Rejeitar e remover o cadastro de ${nome}?`)) return;
+  await db.collection("porteiros").doc(uid).delete();
+  toast(`🗑️ Cadastro de ${nome} removido.`);
+  carregarPorteiros();
+}
+
+async function revogarPorteiro(uid, nome) {
+  if (!confirm(`Revogar o acesso de ${nome}?`)) return;
+  await db.collection("porteiros").doc(uid).update({ aprovado: false });
+  toast(`🔄 Acesso de ${nome} revogado.`);
+  carregarPorteiros();
+}
+
+async function removerPorteiro(uid, nome) {
+  if (!confirm(`⚠️ REMOVER PERMANENTEMENTE o porteiro ${nome}? Esta ação não pode ser desfeita!`)) return;
+  await db.collection("porteiros").doc(uid).delete();
+  toast(`🗑️ Porteiro ${nome} removido.`);
+  carregarPorteiros();
 }
 
 // ══════════════════════════════════════════════════
