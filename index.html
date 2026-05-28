@@ -565,7 +565,8 @@ function renderizarAdmin() {
   const lista = document.getElementById("admin-lista");
 
   if (adminFiltroAtivo === "pendentes") {
-    const pendentes = todosMoradores.filter(m => !m.aprovado && m.role !== "admin");
+    // Mostra todos não aprovados, exceto o próprio admin logado
+    const pendentes = todosMoradores.filter(m => !m.aprovado && m.id !== usuarioAtual.uid);
     if (pendentes.length === 0) {
       lista.innerHTML = `<div class="empty"><div class="empty-icon">✅</div><div>Nenhum cadastro pendente!</div></div>`;
       return;
@@ -582,7 +583,8 @@ function renderizarAdmin() {
         </div>`).join("");
 
   } else if (adminFiltroAtivo === "aprovados") {
-    const aprovados = todosMoradores.filter(m => m.aprovado && m.role !== "admin");
+    // Mostra todos aprovados, exceto o próprio admin logado (para não se revogar)
+    const aprovados = todosMoradores.filter(m => m.aprovado && m.id !== usuarioAtual.uid);
     if (aprovados.length === 0) {
       lista.innerHTML = `<div class="empty"><div class="empty-icon">📭</div><div>Nenhum morador aprovado ainda.</div></div>`;
       return;
@@ -590,8 +592,8 @@ function renderizarAdmin() {
     lista.innerHTML = `<div class="secao-titulo">Moradores aprovados (${aprovados.length})</div>` +
       aprovados.map(m => `
         <div class="admin-card">
-          <div class="admin-card-nome">👤 ${m.nome} <span class="badge badge-aprovado">Aprovado</span></div>
-          <div class="admin-card-info">📧 ${m.email}<br>🏠 Apto ${m.apartamento}</div>
+          <div class="admin-card-nome">👤 ${m.nome} <span class="badge badge-aprovado">${m.apartamento === "000" ? "Admin" : "Aprovado"}</span></div>
+          <div class="admin-card-info">📧 ${m.email}<br>${m.apartamento === "000" ? "🛡️ <b>Administrador</b>" : "🏠 Apto " + m.apartamento}</div>
           <div class="admin-btns">
             <button class="btn-revogar" onclick="revogarMorador('${m.id}','${m.nome}','${m.apartamento}')">🔄 Revogar</button>
             <button class="btn-rejeitar" onclick="removerMorador('${m.id}','${m.nome}','${m.apartamento}')">🗑️ Remover</button>
