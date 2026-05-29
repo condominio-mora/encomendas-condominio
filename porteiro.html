@@ -376,6 +376,18 @@
   </div>
 </div>
 
+<!-- TELA: FORA DE PLANTÃO -->
+<div class="tela" id="tela-fora-plantao">
+  <div class="card">
+    <div class="pendente-box">
+      <div class="pendente-icon">🔴</div>
+      <div class="pendente-titulo" style="color:#B71C1C;">Fora de Plantão</div>
+      <div class="pendente-txt">Você não está escalado para o plantão atual.<br><br>Aguarde o administrador escalar você para o próximo turno.</div>
+    </div>
+    <button class="btn-secondary" onclick="sair()">Sair</button>
+  </div>
+</div>
+
 <!-- TELA: HOME PORTEIRO -->
 <div class="tela" id="tela-home">
   <div class="porteiro-bar">
@@ -537,10 +549,23 @@ auth.onAuthStateChanged(async user => {
 
     // Só porteiros aprovados entram
     if (perfilAtual.role === "porteiro" && perfilAtual.aprovado) {
-      document.getElementById("porteiro-nome").textContent = perfilAtual.nome;
-      document.getElementById("header-sub").textContent = "Porteiro — " + perfilAtual.nome;
-      mostrarTela("tela-home");
-      iniciarEscuta();
+      // Verifica se está de plantão
+      const turnoDoc = await db.collection("config").doc("turno_ativo").get();
+      const turno    = turnoDoc.exists ? turnoDoc.data() : null;
+
+      if (turno && turno.uid === user.uid) {
+        // É o porteiro de plantão — pode entrar
+        document.getElementById("porteiro-nome").textContent = perfilAtual.nome;
+        document.getElementById("header-sub").textContent = "Porteiro — " + perfilAtual.nome;
+        mostrarTela("tela-home");
+        iniciarEscuta();
+        iniciarEscutaTurno(); // escuta se for desescalado
+      } else {
+        // Não está de plantão
+        document.getElementById("header-sub").textContent = "Fora de plantão";
+        mostrarTela("tela-fora-plantao");
+        iniciarEscutaTurno(); // escuta se for escalado
+      }
     } else if (!perfilAtual.aprovado) {
       document.getElementById("header-sub").textContent = "Aguardando aprovação";
       mostrarTela("tela-pendente");
@@ -610,6 +635,7 @@ async function cadastrar() {
 // ── SAIR ──────────────────────────────────────────
 async function sair() {
   if (unsubscribe) unsubscribe();
+  if (unsubTurno)  unsubTurno();
   await auth.signOut();
 }
 
@@ -617,6 +643,32 @@ async function sair() {
 async function buscarPerfil(uid) {
   const doc = await db.collection("porteiros").doc(uid).get();
   return doc.exists ? { id: doc.id, ...doc.data() } : null;
+}
+
+// ── ESCUTA TURNO ──────────────────────────────────
+let unsubTurno = null;
+function iniciarEscutaTurno() {
+  if (unsubTurno) unsubTurno();
+  unsubTurno = db.collection("config").doc("turno_ativo")
+    .onSnapshot(doc => {
+      if (!usuarioAtual || !perfilAtual) return;
+      const turno = doc.exists ? doc.data() : null;
+      const ehMeu = turno && turno.uid === usuarioAtual.uid;
+
+      if (ehMeu) {
+        // Fui escalado — entra na tela home
+        document.getElementById("porteiro-nome").textContent = perfilAtual.nome;
+        document.getElementById("header-sub").textContent = "Porteiro — " + perfilAtual.nome;
+        mostrarTela("tela-home");
+        iniciarEscuta();
+      } else {
+        // Fui desescalado — volta para fora de plantão
+        if (unsubscribe) { unsubscribe(); unsubscribe = null; }
+        document.getElementById("header-sub").textContent = "Fora de plantão";
+        mostrarTela("tela-fora-plantao");
+        toast("🔴 Seu turno foi encerrado pelo administrador.");
+      }
+    });
 }
 
 // ── ESCUTA ENCOMENDAS ─────────────────────────────
