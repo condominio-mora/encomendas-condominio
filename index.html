@@ -151,6 +151,25 @@
     .limpeza-tab { flex: 1; padding: 9px; text-align: center; border: none; background: none; border-radius: 8px; cursor: pointer; font-size: 13px; font-weight: 600; color: #6A1B9A; }
     .limpeza-tab.ativo { background: #6A1B9A; color: white; }
 
+    /* ── Turnos ── */
+    .turno-ativo-card { background: linear-gradient(135deg, var(--verde), #1B5E20); border-radius: 14px; padding: 20px; color: white; margin-bottom: 16px; }
+    .turno-ativo-titulo { font-size: 13px; font-weight: 700; opacity: 0.85; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 8px; }
+    .turno-ativo-nome { font-size: 22px; font-weight: 700; margin-bottom: 4px; }
+    .turno-ativo-info { font-size: 13px; opacity: 0.85; }
+    .turno-card { background: white; border-radius: 12px; padding: 16px; margin-bottom: 10px; box-shadow: 0 1px 4px rgba(0,0,0,0.08); display: flex; align-items: center; gap: 12px; }
+    .turno-card.ativo { border: 2px solid var(--verde); }
+    .turno-card-info { flex: 1; }
+    .turno-card-nome { font-weight: 700; font-size: 15px; }
+    .turno-card-email { font-size: 12px; color: var(--subtexto); margin-top: 3px; }
+    .btn-escalar { background: var(--verde); color: white; border: none; border-radius: 10px; padding: 9px 16px; font-size: 13px; font-weight: 700; cursor: pointer; font-family: 'DM Sans', sans-serif; }
+    .btn-escalar:disabled { background: #BDBDBD; cursor: default; }
+    .turno-agendamento { background: white; border-radius: 12px; padding: 16px; box-shadow: 0 1px 4px rgba(0,0,0,0.08); margin-top: 16px; }
+    .turno-agendamento-titulo { font-size: 13px; font-weight: 700; color: var(--cinza); text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 12px; }
+    .turno-agendamento-row { display: flex; align-items: center; gap: 10px; margin-bottom: 10px; }
+    .turno-agendamento-label { font-size: 13px; font-weight: 600; width: 80px; flex-shrink: 0; }
+    .turno-agendamento-select { flex: 1; padding: 8px 12px; border: 1.5px solid var(--borda); border-radius: 8px; font-size: 13px; font-family: 'DM Sans', sans-serif; }
+    .btn-salvar-agenda { width: 100%; padding: 12px; background: var(--verde); color: white; border: none; border-radius: 10px; font-size: 14px; font-weight: 700; cursor: pointer; margin-top: 8px; font-family: 'DM Sans', sans-serif; }
+
     /* ── Botões tipo de acesso ── */
     .btn-tipo { width: 100%; padding: 16px 20px; background: var(--verde-bg); border: 2px solid var(--verde-light); border-radius: 14px; cursor: pointer; text-align: left; display: flex; flex-direction: column; gap: 4px; transition: all 0.2s; }
     .btn-tipo:hover { background: var(--verde-light); border-color: var(--verde); }
@@ -298,6 +317,7 @@
     <button class="tab"       onclick="adminFiltrar('aprovados',this)">✅ Aprovados</button>
     <button class="tab"       onclick="adminFiltrar('encomendas',this)">📦 Encomendas</button>
     <button class="tab"       onclick="adminFiltrar('porteiros',this)">🔑 Porteiros</button>
+    <button class="tab"       onclick="adminFiltrar('turnos',this)">🕐 Turnos</button>
     <button class="tab tab-limpeza" id="tab-limpeza" style="display:none" onclick="adminFiltrar('limpeza',this)">🧹 Limpeza</button>
   </div>
   <div id="admin-lista">
@@ -622,6 +642,8 @@ function adminFiltrar(tipo, btn) {
     carregarLimpeza();
   } else if (tipo === "porteiros") {
     carregarPorteiros();
+  } else if (tipo === "turnos") {
+    carregarTurnos();
   } else {
     renderizarAdmin();
   }
@@ -724,6 +746,129 @@ async function removerMorador(uid, nome, apto) {
   if (!confirm(`⚠️ REMOVER PERMANENTEMENTE o cadastro de ${nome} (Apto ${apto})? Esta ação não pode ser desfeita!`)) return;
   await db.collection("moradores").doc(uid).delete();
   toast(`🗑️ Cadastro de ${nome} removido. Apto ${apto} liberado para novo morador.`);
+}
+
+// ══════════════════════════════════════════════════
+//  TURNOS — Painel
+// ══════════════════════════════════════════════════
+async function carregarTurnos() {
+  const lista = document.getElementById("admin-lista");
+  lista.innerHTML = `<div class="loading"><div class="spinner"></div>Carregando...</div>`;
+
+  // Busca turno ativo e porteiros aprovados
+  const [turnoDoc, snapPorteiros] = await Promise.all([
+    db.collection("config").doc("turno_ativo").get(),
+    db.collection("porteiros").where("aprovado", "==", true).get(),
+  ]);
+
+  const turnoAtivo = turnoDoc.exists ? turnoDoc.data() : null;
+  const porteiros  = snapPorteiros.docs.map(d => ({ id: d.id, ...d.data() }));
+
+  // Busca agendamento
+  const agendaDoc = await db.collection("config").doc("agenda_turnos").get();
+  const agenda    = agendaDoc.exists ? agendaDoc.data() : { manha: "", noite: "" };
+
+  let html = "";
+
+  // Card turno ativo
+  if (turnoAtivo && turnoAtivo.nome) {
+    const desde = turnoAtivo.desde?.toDate ? turnoAtivo.desde.toDate().toLocaleString("pt-BR") : "—";
+    html += `
+      <div class="turno-ativo-card">
+        <div class="turno-ativo-titulo">🟢 Porteiro de Plantão Agora</div>
+        <div class="turno-ativo-nome">👷 ${turnoAtivo.nome}</div>
+        <div class="turno-ativo-info">📧 ${turnoAtivo.email} · Desde ${desde}</div>
+        <button onclick="encerrarTurno()" style="margin-top:12px;background:rgba(255,255,255,0.2);border:1px solid rgba(255,255,255,0.4);color:white;padding:8px 16px;border-radius:8px;cursor:pointer;font-size:13px;font-family:'DM Sans',sans-serif;">🔴 Encerrar turno</button>
+      </div>`;
+  } else {
+    html += `
+      <div style="background:#FFF3E0;border-radius:12px;padding:16px;margin-bottom:16px;text-align:center;color:#E65100;">
+        <div style="font-size:24px;margin-bottom:8px;">⚠️</div>
+        <div style="font-weight:700;">Nenhum porteiro de plantão no momento</div>
+        <div style="font-size:13px;margin-top:4px;">Escale um porteiro abaixo.</div>
+      </div>`;
+  }
+
+  // Lista porteiros para escalar
+  html += `<div class="secao-titulo">Escalar Porteiro</div>`;
+
+  if (porteiros.length === 0) {
+    html += `<div class="empty"><div class="empty-icon">🔑</div><div>Nenhum porteiro aprovado ainda.</div></div>`;
+  } else {
+    html += porteiros.map(p => {
+      const ehAtivo = turnoAtivo && turnoAtivo.uid === p.id;
+      return `
+        <div class="turno-card ${ehAtivo ? "ativo" : ""}">
+          <div class="turno-card-info">
+            <div class="turno-card-nome">👷 ${p.nome} ${ehAtivo ? "🟢" : ""}</div>
+            <div class="turno-card-email">📧 ${p.email}</div>
+          </div>
+          <button class="btn-escalar" ${ehAtivo ? "disabled" : ""} onclick="escalarPorteiro('${p.id}','${p.nome}','${p.email}')">
+            ${ehAtivo ? "✅ De plantão" : "Escalar"}
+          </button>
+        </div>`;
+    }).join("");
+  }
+
+  // Agendamento automático
+  html += `
+    <div class="turno-agendamento">
+      <div class="turno-agendamento-titulo">⏰ Agendamento Automático (07h e 19h)</div>
+      <div class="turno-agendamento-row">
+        <div class="turno-agendamento-label">🌅 07h00</div>
+        <select class="turno-agendamento-select" id="agenda-manha">
+          <option value="">— Não agendado —</option>
+          ${porteiros.map(p => `<option value="${p.id}|${p.nome}|${p.email}" ${agenda.manha === p.id ? "selected" : ""}>${p.nome}</option>`).join("")}
+        </select>
+      </div>
+      <div class="turno-agendamento-row">
+        <div class="turno-agendamento-label">🌙 19h00</div>
+        <select class="turno-agendamento-select" id="agenda-noite">
+          <option value="">— Não agendado —</option>
+          ${porteiros.map(p => `<option value="${p.id}|${p.nome}|${p.email}" ${agenda.noite === p.id ? "selected" : ""}>${p.nome}</option>`).join("")}
+        </select>
+      </div>
+      <button class="btn-salvar-agenda" onclick="salvarAgendamento()">💾 Salvar Agendamento</button>
+      <p style="font-size:11px;color:var(--subtexto);margin-top:8px;text-align:center">O sistema trocará automaticamente o porteiro de plantão nos horários configurados.</p>
+    </div>`;
+
+  lista.innerHTML = html;
+}
+
+async function escalarPorteiro(uid, nome, email) {
+  if (!confirm(`Escalar ${nome} como porteiro de plantão?`)) return;
+  await db.collection("config").doc("turno_ativo").set({
+    uid, nome, email,
+    desde: new Date(),
+    escaladoPor: usuarioAtual.uid,
+  });
+  toast(`✅ ${nome} escalado para o plantão!`);
+  carregarTurnos();
+}
+
+async function encerrarTurno() {
+  if (!confirm("Encerrar o turno atual?")) return;
+  await db.collection("config").doc("turno_ativo").set({ uid: "", nome: "", email: "", desde: null });
+  toast("🔴 Turno encerrado.");
+  carregarTurnos();
+}
+
+async function salvarAgendamento() {
+  const manha = document.getElementById("agenda-manha").value;
+  const noite  = document.getElementById("agenda-noite").value;
+
+  const [manhaParts, noiteParts] = [manha.split("|"), noite.split("|")];
+
+  await db.collection("config").doc("agenda_turnos").set({
+    manha:      manhaParts[0] || "",
+    manhaNome:  manhaParts[1] || "",
+    manhaEmail: manhaParts[2] || "",
+    noite:      noiteParts[0] || "",
+    noiteNome:  noiteParts[1] || "",
+    noiteEmail: noiteParts[2] || "",
+    atualizadoEm: new Date(),
+  });
+  toast("✅ Agendamento salvo!");
 }
 
 // ══════════════════════════════════════════════════
