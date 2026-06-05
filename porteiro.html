@@ -10,317 +10,80 @@
   <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
   <style>
     @import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=DM+Mono:wght@500&display=swap');
-
     :root {
-      --azul:        #1A237E;
-      --azul-mid:    #283593;
-      --azul-light:  #3949AB;
-      --azul-bg:     #E8EAF6;
-      --verde:       #2E7D32;
-      --verde-bg:    #E8F5E9;
-      --laranja:     #E65100;
-      --laranja-bg:  #FFF3E0;
-      --vermelho:    #B71C1C;
-      --vermelho-bg: #FFEBEE;
-      --cinza:       #546E7A;
-      --cinza-bg:    #ECEFF1;
-      --branco:      #FFFFFF;
-      --texto:       #1A1A2E;
-      --subtexto:    #5C6BC0;
-      --borda:       #C5CAE9;
-      --shadow:      0 4px 16px rgba(26,35,126,0.12);
-      --radius:      14px;
+      --azul:#1A237E;--azul-light:#3949AB;--azul-bg:#E8EAF6;--verde:#2E7D32;--verde-bg:#E8F5E9;
+      --laranja:#E65100;--laranja-bg:#FFF3E0;--vermelho:#B71C1C;--vermelho-bg:#FFEBEE;
+      --cinza:#546E7A;--cinza-bg:#ECEFF1;--branco:#FFFFFF;--texto:#1A1A2E;
+      --subtexto:#5C6BC0;--borda:#C5CAE9;--shadow:0 4px 16px rgba(26,35,126,0.12);--radius:14px;
     }
-
-    * { box-sizing: border-box; margin: 0; padding: 0; }
-
-    body {
-      font-family: 'DM Sans', sans-serif;
-      background: #F0F2FF;
-      color: var(--texto);
-      min-height: 100vh;
-    }
-
-    /* ── HEADER ── */
-    .header {
-      background: linear-gradient(135deg, var(--azul), var(--azul-light));
-      color: white;
-      padding: 16px 20px;
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      position: sticky;
-      top: 0;
-      z-index: 100;
-      box-shadow: 0 2px 12px rgba(26,35,126,0.3);
-    }
-    .header-titulo { font-size: 17px; font-weight: 700; letter-spacing: -0.3px; }
-    .header-sub    { font-size: 12px; opacity: 0.8; margin-top: 2px; }
-    .btn-sair {
-      background: rgba(255,255,255,0.15);
-      border: 1px solid rgba(255,255,255,0.3);
-      color: white;
-      padding: 6px 14px;
-      border-radius: 20px;
-      cursor: pointer;
-      font-size: 13px;
-      font-family: 'DM Sans', sans-serif;
-    }
-
-    /* ── TELAS ── */
-    .tela { display: none; padding: 20px; max-width: 480px; margin: 0 auto; }
-    .tela.ativa { display: block; }
-
-    /* ── LOGIN ── */
-    .login-logo  { text-align: center; font-size: 60px; padding: 32px 0 12px; }
-    .login-titulo { text-align: center; font-size: 24px; font-weight: 700; color: var(--azul); margin-bottom: 4px; }
-    .login-sub   { text-align: center; color: var(--subtexto); font-size: 14px; margin-bottom: 28px; }
-
-    .card {
-      background: var(--branco);
-      border-radius: var(--radius);
-      padding: 24px;
-      box-shadow: var(--shadow);
-      margin-bottom: 16px;
-    }
-
-    .campo-label { display: block; font-size: 12px; font-weight: 700; color: var(--cinza); margin-bottom: 6px; margin-top: 16px; text-transform: uppercase; letter-spacing: 0.5px; }
-    .campo {
-      width: 100%;
-      padding: 13px 16px;
-      border: 1.5px solid var(--borda);
-      border-radius: 10px;
-      font-size: 15px;
-      font-family: 'DM Sans', sans-serif;
-      color: var(--texto);
-      background: #FAFBFF;
-      outline: none;
-      transition: border-color 0.2s, box-shadow 0.2s;
-    }
-    .campo:focus { border-color: var(--azul-light); box-shadow: 0 0 0 3px rgba(57,73,171,0.1); background: white; }
-
-    .btn-primary {
-      width: 100%;
-      padding: 14px;
-      background: linear-gradient(135deg, var(--azul), var(--azul-light));
-      color: white;
-      border: none;
-      border-radius: 12px;
-      font-size: 16px;
-      font-weight: 700;
-      font-family: 'DM Sans', sans-serif;
-      cursor: pointer;
-      margin-top: 24px;
-      transition: opacity 0.2s, transform 0.1s;
-    }
-    .btn-primary:hover   { opacity: 0.92; }
-    .btn-primary:active  { transform: scale(0.98); }
-    .btn-primary:disabled { background: #BDBDBD; cursor: default; }
-
-    .btn-secondary {
-      width: 100%;
-      padding: 12px;
-      background: white;
-      color: var(--azul);
-      border: 1.5px solid var(--azul-light);
-      border-radius: 12px;
-      font-size: 15px;
-      font-weight: 600;
-      font-family: 'DM Sans', sans-serif;
-      cursor: pointer;
-      margin-top: 10px;
-    }
-
-    .link-btn {
-      background: none;
-      border: none;
-      color: var(--azul-light);
-      font-size: 14px;
-      cursor: pointer;
-      text-decoration: underline;
-      margin-top: 16px;
-      display: block;
-      text-align: center;
-      font-family: 'DM Sans', sans-serif;
-    }
-
-    .msg-erro  { background: var(--vermelho-bg); color: var(--vermelho); border-radius: 8px; padding: 10px 14px; font-size: 13px; margin-top: 12px; display: none; }
-    .msg-erro.visivel { display: block; }
-    .msg-info  { background: var(--azul-bg); color: var(--azul); border-radius: 8px; padding: 10px 14px; font-size: 13px; margin-top: 12px; }
-
-    /* ── PENDENTE ── */
-    .pendente-box   { text-align: center; padding: 32px 20px; }
-    .pendente-icon  { font-size: 52px; margin-bottom: 16px; }
-    .pendente-titulo { font-size: 20px; font-weight: 700; color: var(--laranja); margin-bottom: 8px; }
-    .pendente-txt   { color: var(--cinza); font-size: 14px; line-height: 1.6; }
-
-    /* ── HOME PORTEIRO ── */
-    .porteiro-bar {
-      background: linear-gradient(135deg, var(--azul), var(--azul-light));
-      border-radius: var(--radius);
-      padding: 16px 20px;
-      display: flex;
-      align-items: center;
-      gap: 14px;
-      margin-bottom: 20px;
-      color: white;
-    }
-    .porteiro-avatar { font-size: 32px; }
-    .porteiro-nome   { font-weight: 700; font-size: 16px; }
-    .porteiro-cargo  { font-size: 13px; opacity: 0.85; margin-top: 2px; }
-
-    /* ── BOTÕES DE AÇÃO ── */
-    .acoes-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 20px; }
-    .btn-acao {
-      background: var(--branco);
-      border: none;
-      border-radius: var(--radius);
-      padding: 20px 16px;
-      text-align: center;
-      cursor: pointer;
-      box-shadow: var(--shadow);
-      transition: transform 0.15s, box-shadow 0.15s;
-      font-family: 'DM Sans', sans-serif;
-    }
-    .btn-acao:hover  { transform: translateY(-2px); box-shadow: 0 6px 20px rgba(26,35,126,0.15); }
-    .btn-acao:active { transform: scale(0.97); }
-    .btn-acao-icon   { font-size: 32px; margin-bottom: 8px; }
-    .btn-acao-label  { font-size: 14px; font-weight: 700; color: var(--texto); }
-    .btn-acao-sub    { font-size: 12px; color: var(--cinza); margin-top: 3px; }
-    .btn-acao.registrar { border-top: 4px solid var(--azul-light); }
-    .btn-acao.retirar   { border-top: 4px solid var(--verde); }
-
-    /* ── CONTADOR ── */
-    .contador-bar {
-      background: var(--branco);
-      border-radius: var(--radius);
-      padding: 16px 20px;
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      box-shadow: var(--shadow);
-      margin-bottom: 20px;
-    }
-    .contador-label { font-size: 13px; color: var(--cinza); font-weight: 600; }
-    .contador-num   { font-size: 28px; font-weight: 700; color: var(--laranja); font-family: 'DM Mono', monospace; }
-
-    /* ── LISTA PENDENTES ── */
-    .enc-card {
-      background: var(--branco);
-      border-radius: 12px;
-      padding: 16px;
-      margin-bottom: 10px;
-      box-shadow: 0 2px 8px rgba(26,35,126,0.08);
-      border-left: 4px solid var(--laranja);
-      display: flex;
-      align-items: center;
-      gap: 12px;
-    }
-    .enc-card-info  { flex: 1; }
-    .enc-card-apto  { font-weight: 700; font-size: 15px; color: var(--azul); }
-    .enc-card-tipo  { font-size: 13px; color: var(--cinza); margin-top: 3px; }
-    .enc-card-data  { font-size: 12px; color: var(--subtexto); margin-top: 2px; font-family: 'DM Mono', monospace; }
-    .btn-retirar-enc {
-      background: var(--verde);
-      color: white;
-      border: none;
-      border-radius: 10px;
-      padding: 10px 14px;
-      font-size: 13px;
-      font-weight: 700;
-      cursor: pointer;
-      font-family: 'DM Sans', sans-serif;
-      white-space: nowrap;
-      transition: background 0.2s;
-    }
-    .btn-retirar-enc:hover { background: #1B5E20; }
-
-    /* ── MODAL NOVA ENCOMENDA ── */
-    .modal-overlay {
-      position: fixed;
-      inset: 0;
-      background: rgba(26,35,126,0.4);
-      backdrop-filter: blur(4px);
-      z-index: 200;
-      display: none;
-      align-items: flex-end;
-      justify-content: center;
-    }
-    .modal-overlay.aberto { display: flex; }
-    .modal {
-      background: white;
-      border-radius: 24px 24px 0 0;
-      padding: 24px 20px 32px;
-      width: 100%;
-      max-width: 480px;
-      max-height: 90vh;
-      overflow-y: auto;
-      animation: slideUp 0.3s ease;
-    }
-    @keyframes slideUp { from { transform: translateY(100%); } to { transform: translateY(0); } }
-    .modal-titulo { font-size: 18px; font-weight: 700; margin-bottom: 4px; }
-    .modal-sub    { font-size: 13px; color: var(--cinza); margin-bottom: 20px; }
-    .modal-close  { float: right; background: var(--cinza-bg); border: none; border-radius: 50%; width: 32px; height: 32px; font-size: 16px; cursor: pointer; }
-
-    /* ── REMETENTES RÁPIDOS ── */
-    .remetentes-grid { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 8px; margin-bottom: 4px; }
-    .btn-remetente {
-      padding: 7px 14px;
-      background: var(--azul-bg);
-      color: var(--azul);
-      border: 1.5px solid var(--borda);
-      border-radius: 20px;
-      font-size: 13px;
-      font-weight: 600;
-      cursor: pointer;
-      font-family: 'DM Sans', sans-serif;
-      transition: all 0.15s;
-    }
-    .btn-remetente.ativo { background: var(--azul-light); color: white; border-color: var(--azul-light); }
-
-    /* ── TIPOS ── */
-    .tipos-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-top: 8px; }
-    .btn-tipo-enc {
-      padding: 10px 8px;
-      background: var(--cinza-bg);
-      border: 1.5px solid transparent;
-      border-radius: 10px;
-      font-size: 12px;
-      font-weight: 600;
-      cursor: pointer;
-      text-align: center;
-      font-family: 'DM Sans', sans-serif;
-      transition: all 0.15s;
-      color: var(--texto);
-    }
-    .btn-tipo-enc .tipo-icon { font-size: 20px; display: block; margin-bottom: 4px; }
-    .btn-tipo-enc.ativo { background: var(--azul-bg); border-color: var(--azul-light); color: var(--azul); }
-
-    /* ── MISC ── */
-    .secao-titulo { font-size: 13px; font-weight: 700; color: var(--cinza); text-transform: uppercase; letter-spacing: 0.5px; margin: 20px 0 10px; }
-    .empty { text-align: center; padding: 40px 20px; color: var(--cinza); }
-    .empty-icon { font-size: 48px; margin-bottom: 12px; }
-    .loading { text-align: center; padding: 40px; color: var(--cinza); }
-    .spinner { width: 36px; height: 36px; border: 3px solid var(--borda); border-top-color: var(--azul-light); border-radius: 50%; animation: spin 0.8s linear infinite; margin: 0 auto 12px; }
-    @keyframes spin { to { transform: rotate(360deg); } }
-
-    .toast { position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%) translateY(80px); background: var(--azul); color: white; padding: 12px 20px; border-radius: 24px; font-size: 14px; font-weight: 600; transition: transform 0.3s; z-index: 999; white-space: nowrap; box-shadow: 0 4px 16px rgba(26,35,126,0.3); }
-    .toast.show { transform: translateX(-50%) translateY(0); }
-
-    .badge { display: inline-block; padding: 3px 10px; border-radius: 20px; font-size: 12px; font-weight: 700; }
-    .badge-aguardando { background: var(--laranja-bg); color: var(--laranja); }
-    .badge-retirado   { background: var(--verde-bg);   color: var(--verde); }
-    .badge-devolvido  { background: var(--vermelho-bg); color: var(--vermelho); }
-
-    .divider { height: 1px; background: var(--borda); margin: 16px 0; }
-
-    /* select estilizado */
-    select.campo { appearance: none; background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%23546E7A' d='M6 8L1 3h10z'/%3E%3C/svg%3E"); background-repeat: no-repeat; background-position: right 14px center; padding-right: 36px; }
+    *{box-sizing:border-box;margin:0;padding:0;}
+    body{font-family:'DM Sans',sans-serif;background:#F0F2FF;color:var(--texto);min-height:100vh;}
+    .header{background:linear-gradient(135deg,var(--azul),var(--azul-light));color:white;padding:16px 20px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:100;box-shadow:0 2px 12px rgba(26,35,126,0.3);}
+    .header-titulo{font-size:17px;font-weight:700;letter-spacing:-0.3px;}
+    .header-sub{font-size:12px;opacity:0.8;margin-top:2px;}
+    .btn-sair{background:rgba(255,255,255,0.15);border:1px solid rgba(255,255,255,0.3);color:white;padding:6px 14px;border-radius:20px;cursor:pointer;font-size:13px;font-family:'DM Sans',sans-serif;}
+    .tela{display:none;padding:20px;max-width:480px;margin:0 auto;}.tela.ativa{display:block;}
+    .login-logo{text-align:center;font-size:60px;padding:32px 0 12px;}
+    .login-titulo{text-align:center;font-size:24px;font-weight:700;color:var(--azul);margin-bottom:4px;}
+    .login-sub{text-align:center;color:var(--subtexto);font-size:14px;margin-bottom:28px;}
+    .card{background:var(--branco);border-radius:var(--radius);padding:24px;box-shadow:var(--shadow);margin-bottom:16px;}
+    .campo-label{display:block;font-size:12px;font-weight:700;color:var(--cinza);margin-bottom:6px;margin-top:16px;text-transform:uppercase;letter-spacing:0.5px;}
+    .campo{width:100%;padding:13px 16px;border:1.5px solid var(--borda);border-radius:10px;font-size:15px;font-family:'DM Sans',sans-serif;color:var(--texto);background:#FAFBFF;outline:none;transition:border-color 0.2s,box-shadow 0.2s;}
+    .campo:focus{border-color:var(--azul-light);box-shadow:0 0 0 3px rgba(57,73,171,0.1);background:white;}
+    .btn-primary{width:100%;padding:14px;background:linear-gradient(135deg,var(--azul),var(--azul-light));color:white;border:none;border-radius:12px;font-size:16px;font-weight:700;font-family:'DM Sans',sans-serif;cursor:pointer;margin-top:24px;transition:opacity 0.2s,transform 0.1s;}
+    .btn-primary:hover{opacity:0.92;}.btn-primary:active{transform:scale(0.98);}.btn-primary:disabled{background:#BDBDBD;cursor:default;}
+    .btn-secondary{width:100%;padding:12px;background:white;color:var(--azul);border:1.5px solid var(--azul-light);border-radius:12px;font-size:15px;font-weight:600;font-family:'DM Sans',sans-serif;cursor:pointer;margin-top:10px;}
+    .link-btn{background:none;border:none;color:var(--azul-light);font-size:14px;cursor:pointer;text-decoration:underline;margin-top:16px;display:block;text-align:center;font-family:'DM Sans',sans-serif;}
+    .msg-erro{background:var(--vermelho-bg);color:var(--vermelho);border-radius:8px;padding:10px 14px;font-size:13px;margin-top:12px;display:none;}
+    .msg-erro.visivel{display:block;}
+    .msg-info{background:var(--azul-bg);color:var(--azul);border-radius:8px;padding:10px 14px;font-size:13px;margin-top:12px;}
+    .pendente-box{text-align:center;padding:32px 20px;}
+    .pendente-icon{font-size:52px;margin-bottom:16px;}
+    .pendente-titulo{font-size:20px;font-weight:700;color:var(--laranja);margin-bottom:8px;}
+    .pendente-txt{color:var(--cinza);font-size:14px;line-height:1.6;}
+    .porteiro-bar{background:linear-gradient(135deg,var(--azul),var(--azul-light));border-radius:var(--radius);padding:16px 20px;display:flex;align-items:center;gap:14px;margin-bottom:20px;color:white;}
+    .porteiro-avatar{font-size:32px;}.porteiro-nome{font-weight:700;font-size:16px;}.porteiro-cargo{font-size:13px;opacity:0.85;margin-top:2px;}
+    .acoes-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:20px;}
+    .btn-acao{background:var(--branco);border:none;border-radius:var(--radius);padding:20px 16px;text-align:center;cursor:pointer;box-shadow:var(--shadow);transition:transform 0.15s,box-shadow 0.15s;font-family:'DM Sans',sans-serif;}
+    .btn-acao:hover{transform:translateY(-2px);box-shadow:0 6px 20px rgba(26,35,126,0.15);}.btn-acao:active{transform:scale(0.97);}
+    .btn-acao-icon{font-size:32px;margin-bottom:8px;}.btn-acao-label{font-size:14px;font-weight:700;color:var(--texto);}.btn-acao-sub{font-size:12px;color:var(--cinza);margin-top:3px;}
+    .btn-acao.registrar{border-top:4px solid var(--azul-light);}.btn-acao.retirar{border-top:4px solid var(--verde);}
+    .contador-bar{background:var(--branco);border-radius:var(--radius);padding:16px 20px;display:flex;align-items:center;justify-content:space-between;box-shadow:var(--shadow);margin-bottom:20px;}
+    .contador-label{font-size:13px;color:var(--cinza);font-weight:600;}
+    .contador-num{font-size:28px;font-weight:700;color:var(--laranja);font-family:'DM Mono',monospace;}
+    .enc-card{background:var(--branco);border-radius:12px;padding:16px;margin-bottom:10px;box-shadow:0 2px 8px rgba(26,35,126,0.08);border-left:4px solid var(--laranja);display:flex;align-items:center;gap:12px;}
+    .enc-card-info{flex:1;}.enc-card-apto{font-weight:700;font-size:15px;color:var(--azul);}
+    .enc-card-tipo{font-size:13px;color:var(--cinza);margin-top:3px;}
+    .enc-card-data{font-size:12px;color:var(--subtexto);margin-top:2px;font-family:'DM Mono',monospace;}
+    .btn-retirar-enc{background:var(--verde);color:white;border:none;border-radius:10px;padding:10px 14px;font-size:13px;font-weight:700;cursor:pointer;font-family:'DM Sans',sans-serif;white-space:nowrap;transition:background 0.2s;}
+    .btn-retirar-enc:hover{background:#1B5E20;}
+    .modal-overlay{position:fixed;inset:0;background:rgba(26,35,126,0.4);backdrop-filter:blur(4px);z-index:200;display:none;align-items:flex-end;justify-content:center;}
+    .modal-overlay.aberto{display:flex;}
+    .modal{background:white;border-radius:24px 24px 0 0;padding:24px 20px 32px;width:100%;max-width:480px;max-height:90vh;overflow-y:auto;animation:slideUp 0.3s ease;}
+    @keyframes slideUp{from{transform:translateY(100%)}to{transform:translateY(0)}}
+    .modal-titulo{font-size:18px;font-weight:700;margin-bottom:4px;}.modal-sub{font-size:13px;color:var(--cinza);margin-bottom:20px;}
+    .modal-close{float:right;background:var(--cinza-bg);border:none;border-radius:50%;width:32px;height:32px;font-size:16px;cursor:pointer;}
+    .remetentes-grid{display:flex;flex-wrap:wrap;gap:8px;margin-top:8px;margin-bottom:4px;}
+    .btn-remetente{padding:7px 14px;background:var(--azul-bg);color:var(--azul);border:1.5px solid var(--borda);border-radius:20px;font-size:13px;font-weight:600;cursor:pointer;font-family:'DM Sans',sans-serif;transition:all 0.15s;}
+    .btn-remetente.ativo{background:var(--azul-light);color:white;border-color:var(--azul-light);}
+    .tipos-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:8px;}
+    .btn-tipo-enc{padding:10px 8px;background:var(--cinza-bg);border:1.5px solid transparent;border-radius:10px;font-size:12px;font-weight:600;cursor:pointer;text-align:center;font-family:'DM Sans',sans-serif;transition:all 0.15s;color:var(--texto);}
+    .btn-tipo-enc .tipo-icon{font-size:20px;display:block;margin-bottom:4px;}
+    .btn-tipo-enc.ativo{background:var(--azul-bg);border-color:var(--azul-light);color:var(--azul);}
+    .secao-titulo{font-size:13px;font-weight:700;color:var(--cinza);text-transform:uppercase;letter-spacing:0.5px;margin:20px 0 10px;}
+    .empty{text-align:center;padding:40px 20px;color:var(--cinza);}.empty-icon{font-size:48px;margin-bottom:12px;}
+    .loading{text-align:center;padding:40px;color:var(--cinza);}
+    .spinner{width:36px;height:36px;border:3px solid var(--borda);border-top-color:var(--azul-light);border-radius:50%;animation:spin 0.8s linear infinite;margin:0 auto 12px;}
+    @keyframes spin{to{transform:rotate(360deg)}}
+    .toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%) translateY(80px);background:var(--azul);color:white;padding:12px 20px;border-radius:24px;font-size:14px;font-weight:600;transition:transform 0.3s;z-index:999;white-space:nowrap;box-shadow:0 4px 16px rgba(26,35,126,0.3);}
+    .toast.show{transform:translateX(-50%) translateY(0);}
+    select.campo{appearance:none;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%23546E7A' d='M6 8L1 3h10z'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 14px center;padding-right:36px;}
+    .rodape{text-align:center;padding:24px 20px 32px;font-size:11px;color:var(--cinza);line-height:1.8;max-width:480px;margin:0 auto;}
+    .rodape-nome{font-weight:700;font-size:12px;margin-bottom:4px;color:var(--azul);}
   </style>
 </head>
 <body>
 
-<!-- HEADER -->
 <div class="header" id="header" style="display:none">
   <div>
     <div class="header-titulo">🔑 Portaria Digital</div>
@@ -329,7 +92,6 @@
   <button class="btn-sair" onclick="sair()">Sair</button>
 </div>
 
-<!-- TELA: LOGIN -->
 <div class="tela ativa" id="tela-login">
   <div class="login-logo">🔑</div>
   <div class="login-titulo">Portaria Digital</div>
@@ -343,9 +105,13 @@
     <button class="btn-primary" id="btn-entrar" onclick="entrar()">Entrar</button>
     <button class="link-btn" onclick="mostrarTela('tela-cadastro')">Primeiro acesso? Cadastre-se</button>
   </div>
+  <div class="rodape">
+    <div class="rodape-nome">🚀 Skywalker Soluções em APIs</div>
+    <div>📞 +55 (21) 98303-6539 · ✉️ lucasoliveira.d3v@gmail.com</div>
+    <div style="margin-top:6px;">Copyright © 2026 Skywalker. Todos os direitos reservados.</div>
+  </div>
 </div>
 
-<!-- TELA: CADASTRO -->
 <div class="tela" id="tela-cadastro">
   <div class="login-logo">👷</div>
   <div class="login-titulo">Cadastro — Porteiro</div>
@@ -364,7 +130,6 @@
   </div>
 </div>
 
-<!-- TELA: AGUARDANDO -->
 <div class="tela" id="tela-pendente">
   <div class="card">
     <div class="pendente-box">
@@ -376,7 +141,6 @@
   </div>
 </div>
 
-<!-- TELA: FORA DE PLANTÃO -->
 <div class="tela" id="tela-fora-plantao">
   <div class="card">
     <div class="pendente-box">
@@ -388,7 +152,6 @@
   </div>
 </div>
 
-<!-- TELA: HOME PORTEIRO -->
 <div class="tela" id="tela-home">
   <div class="porteiro-bar">
     <div class="porteiro-avatar">👷</div>
@@ -397,7 +160,6 @@
       <div class="porteiro-cargo">Porteiro</div>
     </div>
   </div>
-
   <div class="acoes-grid">
     <button class="btn-acao registrar" onclick="abrirModalNovaEncomenda()">
       <div class="btn-acao-icon">📦</div>
@@ -410,56 +172,41 @@
       <div class="btn-acao-sub">Morador buscou</div>
     </button>
   </div>
-
   <div class="contador-bar">
-    <div>
-      <div class="contador-label">📦 Aguardando retirada</div>
-    </div>
+    <div><div class="contador-label">📦 Aguardando retirada</div></div>
     <div class="contador-num" id="contador-pendentes">—</div>
   </div>
-
   <div class="secao-titulo">Encomendas pendentes</div>
   <div id="lista-pendentes">
     <div class="loading"><div class="spinner"></div>Carregando...</div>
   </div>
+  <div class="rodape">
+    <div class="rodape-nome">🚀 Skywalker Soluções em APIs</div>
+    <div>📞 +55 (21) 98303-6539 · ✉️ lucasoliveira.d3v@gmail.com</div>
+    <div style="margin-top:6px;">Copyright © 2026 Skywalker. Todos os direitos reservados.</div>
+  </div>
 </div>
 
-<!-- MODAL: NOVA ENCOMENDA -->
 <div class="modal-overlay" id="modal-nova">
   <div class="modal">
     <button class="modal-close" onclick="fecharModal('modal-nova')">✕</button>
     <div class="modal-titulo">📦 Nova Encomenda</div>
     <div class="modal-sub">Preencha os dados da encomenda recebida</div>
-
     <label class="campo-label">Apartamento</label>
     <input class="campo" type="text" id="nova-apto" placeholder="Ex: 1203" list="lista-aptos-porteiro" autocomplete="off"/>
     <datalist id="lista-aptos-porteiro"></datalist>
-
     <label class="campo-label">Tipo de encomenda</label>
     <div class="tipos-grid">
-      <button class="btn-tipo-enc ativo" onclick="selecionarTipo(this,'Caixa/Pacote')">
-        <span class="tipo-icon">📦</span>Caixa/Pacote
-      </button>
-      <button class="btn-tipo-enc" onclick="selecionarTipo(this,'Documento')">
-        <span class="tipo-icon">📄</span>Documento
-      </button>
-      <button class="btn-tipo-enc" onclick="selecionarTipo(this,'Carta/Envelope')">
-        <span class="tipo-icon">✉️</span>Carta
-      </button>
-      <button class="btn-tipo-enc" onclick="selecionarTipo(this,'Mercadoria Grande')">
-        <span class="tipo-icon">🛋️</span>Mercadoria
-      </button>
-      <button class="btn-tipo-enc" onclick="selecionarTipo(this,'Alimentos')">
-        <span class="tipo-icon">🥗</span>Alimentos
-      </button>
-      <button class="btn-tipo-enc" onclick="selecionarTipo(this,'Outros')">
-        <span class="tipo-icon">📬</span>Outros
-      </button>
+      <button class="btn-tipo-enc ativo" onclick="selecionarTipo(this,'Caixa/Pacote')"><span class="tipo-icon">📦</span>Caixa/Pacote</button>
+      <button class="btn-tipo-enc" onclick="selecionarTipo(this,'Documento')"><span class="tipo-icon">📄</span>Documento</button>
+      <button class="btn-tipo-enc" onclick="selecionarTipo(this,'Carta/Envelope')"><span class="tipo-icon">✉️</span>Carta</button>
+      <button class="btn-tipo-enc" onclick="selecionarTipo(this,'Mercadoria Grande')"><span class="tipo-icon">🛋️</span>Mercadoria</button>
+      <button class="btn-tipo-enc" onclick="selecionarTipo(this,'Alimentos')"><span class="tipo-icon">🥗</span>Alimentos</button>
+      <button class="btn-tipo-enc" onclick="selecionarTipo(this,'Outros')"><span class="tipo-icon">📬</span>Outros</button>
     </div>
-    <div id="campo-outros-wrapper" style="display:none; margin-top:8px;">
+    <div id="campo-outros-wrapper" style="display:none;margin-top:8px;">
       <input class="campo" type="text" id="nova-tipo-outros" placeholder="Descreva o tipo de encomenda..."/>
     </div>
-
     <label class="campo-label">Remetente</label>
     <div class="remetentes-grid">
       <button class="btn-remetente" onclick="selecionarRemetente(this,'Mercado Livre')">Mercado Livre</button>
@@ -470,16 +217,13 @@
       <button class="btn-remetente" onclick="selecionarRemetente(this,'Shein')">Shein</button>
     </div>
     <input class="campo" type="text" id="nova-remetente" placeholder="Ou digite o remetente..." style="margin-top:8px"/>
-
     <label class="campo-label">Destinatário (opcional)</label>
     <input class="campo" type="text" id="nova-destinatario" placeholder="Nome no pacote..."/>
-
     <div class="msg-erro" id="nova-erro"></div>
     <button class="btn-primary" id="btn-registrar" onclick="registrarEncomenda()">📦 Registrar Encomenda</button>
   </div>
 </div>
 
-<!-- MODAL: RETIRADA -->
 <div class="modal-overlay" id="modal-retirada">
   <div class="modal">
     <button class="modal-close" onclick="fecharModal('modal-retirada')">✕</button>
@@ -494,405 +238,135 @@
 <div class="toast" id="toast"></div>
 
 <script>
-// ── FIREBASE ──────────────────────────────────────
-const firebaseConfig = {
-  apiKey:            "AIzaSyAgoXGf9Eyh3L4DLXwzRtNAq35PZpy748w",
-  authDomain:        "encomendas-condominio.firebaseapp.com",
-  projectId:         "encomendas-condominio",
-  storageBucket:     "encomendas-condominio.firebasestorage.app",
-  messagingSenderId: "568905816585",
-  appId:             "1:568905816585:web:ec1fd4fa78453247b136d8",
-};
-
+const firebaseConfig={apiKey:"AIzaSyAgoXGf9Eyh3L4DLXwzRtNAq35PZpy748w",authDomain:"encomendas-condominio.firebaseapp.com",projectId:"encomendas-condominio",storageBucket:"encomendas-condominio.firebasestorage.app",messagingSenderId:"568905816585",appId:"1:568905816585:web:ec1fd4fa78453247b136d8"};
 firebase.initializeApp(firebaseConfig);
-const auth = firebase.auth();
-const db   = firebase.firestore();
-
-// ── LISTA DE APTOS ────────────────────────────────
-const APTOS = [];
-for (let andar = 5; andar <= 21; andar++) {
-  for (let col = 1; col <= 8; col++) {
-    if ([3,4,5,6].includes(col) && andar === 21) continue;
-    APTOS.push(`${andar}0${col}`);
-  }
-}
-
-window.addEventListener("DOMContentLoaded", () => {
-  const dl = document.getElementById("lista-aptos-porteiro");
-  APTOS.forEach(ap => {
-    const o = document.createElement("option");
-    o.value = ap;
-    dl.appendChild(o);
-  });
-});
-
-// ── ESTADO ────────────────────────────────────────
-let usuarioAtual  = null;
-let perfilAtual   = null;
-let unsubscribe   = null;
-let todasEncomendas = [];
-let tipoSelecionado     = "Caixa/Pacote";
-let remetenteSelecionado = "";
-
-// ── AUTH ──────────────────────────────────────────
-auth.onAuthStateChanged(async user => {
-  if (user) {
-    usuarioAtual = user;
-    perfilAtual  = await buscarPerfil(user.uid);
-
-    if (!perfilAtual) {
-      mostrarTela("tela-login");
-      return;
-    }
-
-    document.getElementById("header").style.display = "flex";
-
-    // Só porteiros aprovados entram
-    if (perfilAtual.role === "porteiro" && perfilAtual.aprovado) {
-      // Verifica se está de plantão
-      const turnoDoc = await db.collection("config").doc("turno_ativo").get();
-      const turno    = turnoDoc.exists ? turnoDoc.data() : null;
-
-      if (turno && turno.uid === user.uid) {
-        // É o porteiro de plantão — pode entrar
-        document.getElementById("porteiro-nome").textContent = perfilAtual.nome;
-        document.getElementById("header-sub").textContent = "Porteiro — " + perfilAtual.nome;
-        mostrarTela("tela-home");
-        iniciarEscuta();
-        iniciarEscutaTurno(); // escuta se for desescalado
-      } else {
-        // Não está de plantão
-        document.getElementById("header-sub").textContent = "Fora de plantão";
-        mostrarTela("tela-fora-plantao");
-        iniciarEscutaTurno(); // escuta se for escalado
+const auth=firebase.auth(),db=firebase.firestore();
+const APTOS=[];
+for(let a=5;a<=21;a++)for(let c=1;c<=8;c++){if([3,4,5,6].includes(c)&&a===21)continue;APTOS.push(`${a}0${c}`);}
+window.addEventListener("DOMContentLoaded",()=>{const dl=document.getElementById("lista-aptos-porteiro");APTOS.forEach(ap=>{const o=document.createElement("option");o.value=ap;dl.appendChild(o);});});
+let usuarioAtual=null,perfilAtual=null,unsubscribe=null,unsubTurno=null,todasEncomendas=[],tipoSelecionado="Caixa/Pacote",remetenteSelecionado="";
+auth.onAuthStateChanged(async user=>{
+  if(user){
+    usuarioAtual=user;perfilAtual=await buscarPerfil(user.uid);
+    if(!perfilAtual){mostrarTela("tela-login");return;}
+    document.getElementById("header").style.display="flex";
+    if(perfilAtual.role==="porteiro"&&perfilAtual.aprovado){
+      const turnoDoc=await db.collection("config").doc("turno_ativo").get();
+      const turno=turnoDoc.exists?turnoDoc.data():null;
+      if(turno&&turno.uid===user.uid){
+        document.getElementById("porteiro-nome").textContent=perfilAtual.nome;
+        document.getElementById("header-sub").textContent="Porteiro — "+perfilAtual.nome;
+        mostrarTela("tela-home");iniciarEscuta();iniciarEscutaTurno();
+      }else{
+        document.getElementById("header-sub").textContent="Fora de plantão";
+        mostrarTela("tela-fora-plantao");iniciarEscutaTurno();
       }
-    } else if (!perfilAtual.aprovado) {
-      document.getElementById("header-sub").textContent = "Aguardando aprovação";
-      mostrarTela("tela-pendente");
-    } else {
-      // Conta não é porteiro
-      mostrarErro(document.getElementById("login-erro"), "Esta conta não tem perfil de porteiro.");
-      await auth.signOut();
-    }
-  } else {
-    usuarioAtual = null;
-    perfilAtual  = null;
-    document.getElementById("header").style.display = "none";
+    }else if(!perfilAtual.aprovado){
+      document.getElementById("header-sub").textContent="Aguardando aprovação";mostrarTela("tela-pendente");
+    }else{mostrarErro(document.getElementById("login-erro"),"Esta conta não tem perfil de porteiro.");await auth.signOut();}
+  }else{
+    usuarioAtual=null;perfilAtual=null;
+    document.getElementById("header").style.display="none";
     mostrarTela("tela-login");
-    if (unsubscribe) unsubscribe();
+    if(unsubscribe)unsubscribe();if(unsubTurno)unsubTurno();
   }
 });
-
-// ── NAVEGAÇÃO ─────────────────────────────────────
-function mostrarTela(id) {
-  document.querySelectorAll(".tela").forEach(t => t.classList.remove("ativa"));
-  document.getElementById(id).classList.add("ativa");
+function mostrarTela(id){document.querySelectorAll(".tela").forEach(t=>t.classList.remove("ativa"));document.getElementById(id).classList.add("ativa");}
+async function entrar(){
+  const email=document.getElementById("login-email").value.trim(),senha=document.getElementById("login-senha").value;
+  const btn=document.getElementById("btn-entrar"),erro=document.getElementById("login-erro");
+  if(!email||!senha){mostrarErro(erro,"Preencha e-mail e senha.");return;}
+  btn.disabled=true;btn.textContent="Entrando...";erro.classList.remove("visivel");
+  try{await auth.signInWithEmailAndPassword(email,senha);}
+  catch(e){mostrarErro(erro,traduzirErro(e.code));btn.disabled=false;btn.textContent="Entrar";}
 }
-
-// ── LOGIN ─────────────────────────────────────────
-async function entrar() {
-  const email = document.getElementById("login-email").value.trim();
-  const senha = document.getElementById("login-senha").value;
-  const btn   = document.getElementById("btn-entrar");
-  const erro  = document.getElementById("login-erro");
-  if (!email || !senha) { mostrarErro(erro, "Preencha e-mail e senha."); return; }
-  btn.disabled = true; btn.textContent = "Entrando...";
-  erro.classList.remove("visivel");
-  try {
-    await auth.signInWithEmailAndPassword(email, senha);
-  } catch(e) {
-    mostrarErro(erro, traduzirErro(e.code));
-    btn.disabled = false; btn.textContent = "Entrar";
-  }
+async function cadastrar(){
+  const nome=document.getElementById("cad-nome").value.trim(),email=document.getElementById("cad-email").value.trim(),senha=document.getElementById("cad-senha").value;
+  const btn=document.getElementById("btn-cadastrar"),erro=document.getElementById("cad-erro");
+  if(!nome||!email||!senha){mostrarErro(erro,"Preencha todos os campos.");return;}
+  if(senha.length<6){mostrarErro(erro,"Senha precisa ter no mínimo 6 caracteres.");return;}
+  btn.disabled=true;btn.textContent="Enviando...";erro.classList.remove("visivel");
+  try{const cred=await auth.createUserWithEmailAndPassword(email,senha);await db.collection("porteiros").doc(cred.user.uid).set({nome,email,aprovado:false,role:"porteiro",criadoEm:new Date()});toast("✅ Solicitação enviada! Aguarde aprovação.");}
+  catch(e){mostrarErro(erro,traduzirErro(e.code));btn.disabled=false;btn.textContent="Solicitar Acesso";}
 }
-
-// ── CADASTRO ──────────────────────────────────────
-async function cadastrar() {
-  const nome  = document.getElementById("cad-nome").value.trim();
-  const email = document.getElementById("cad-email").value.trim();
-  const senha = document.getElementById("cad-senha").value;
-  const btn   = document.getElementById("btn-cadastrar");
-  const erro  = document.getElementById("cad-erro");
-  if (!nome||!email||!senha) { mostrarErro(erro,"Preencha todos os campos."); return; }
-  if (senha.length < 6)      { mostrarErro(erro,"Senha precisa ter no mínimo 6 caracteres."); return; }
-  btn.disabled = true; btn.textContent = "Enviando...";
-  erro.classList.remove("visivel");
-  try {
-    const cred = await auth.createUserWithEmailAndPassword(email, senha);
-    await db.collection("porteiros").doc(cred.user.uid).set({
-      nome, email,
-      aprovado: false,
-      role: "porteiro",
-      criadoEm: new Date(),
-    });
-    toast("✅ Solicitação enviada! Aguarde aprovação.");
-  } catch(e) {
-    mostrarErro(erro, traduzirErro(e.code));
-    btn.disabled = false; btn.textContent = "Solicitar Acesso";
-  }
+async function sair(){if(unsubscribe)unsubscribe();if(unsubTurno)unsubTurno();await auth.signOut();}
+async function buscarPerfil(uid){const doc=await db.collection("porteiros").doc(uid).get();return doc.exists?{id:doc.id,...doc.data()}:null;}
+function iniciarEscutaTurno(){
+  if(unsubTurno)unsubTurno();
+  unsubTurno=db.collection("config").doc("turno_ativo").onSnapshot(doc=>{
+    if(!usuarioAtual||!perfilAtual)return;
+    const turno=doc.exists?doc.data():null,ehMeu=turno&&turno.uid===usuarioAtual.uid;
+    if(ehMeu){document.getElementById("porteiro-nome").textContent=perfilAtual.nome;document.getElementById("header-sub").textContent="Porteiro — "+perfilAtual.nome;mostrarTela("tela-home");iniciarEscuta();}
+    else{if(unsubscribe){unsubscribe();unsubscribe=null;}document.getElementById("header-sub").textContent="Fora de plantão";mostrarTela("tela-fora-plantao");toast("🔴 Seu turno foi encerrado pelo administrador.");}
+  });
 }
-
-// ── SAIR ──────────────────────────────────────────
-async function sair() {
-  if (unsubscribe) unsubscribe();
-  if (unsubTurno)  unsubTurno();
-  await auth.signOut();
+function iniciarEscuta(){
+  if(unsubscribe)unsubscribe();
+  unsubscribe=db.collection("encomendas").where("status","==","Aguardando Retirada").onSnapshot(snap=>{
+    const anterior=todasEncomendas.length;todasEncomendas=snap.docs.map(d=>({id:d.id,...d.data()}));
+    document.getElementById("contador-pendentes").textContent=todasEncomendas.length;
+    renderizarPendentes();if(anterior>0&&todasEncomendas.length>anterior)tocarBip();
+  },err=>{toast("❌ Erro ao carregar encomendas: "+err.message);});
 }
-
-// ── PERFIL ────────────────────────────────────────
-async function buscarPerfil(uid) {
-  const doc = await db.collection("porteiros").doc(uid).get();
-  return doc.exists ? { id: doc.id, ...doc.data() } : null;
+function renderizarPendentes(){
+  const lista=document.getElementById("lista-pendentes");
+  if(todasEncomendas.length===0){lista.innerHTML='<div class="empty"><div class="empty-icon">🎉</div><div>Nenhuma encomenda pendente!</div></div>';return;}
+  lista.innerHTML=todasEncomendas.map(enc=>`<div class="enc-card"><div class="enc-card-info"><div class="enc-card-apto">🏠 Apto ${enc.apartamento}</div><div class="enc-card-tipo">${enc.tipo||"Encomenda"} · ${enc.remetente||"—"}</div><div class="enc-card-data">${enc.dataHora||"—"}</div></div><button class="btn-retirar-enc" onclick="confirmarRetirada('${enc.id}','${enc.apartamento}')">✅ Retirado</button></div>`).join("");
 }
-
-// ── ESCUTA TURNO ──────────────────────────────────
-let unsubTurno = null;
-function iniciarEscutaTurno() {
-  if (unsubTurno) unsubTurno();
-  unsubTurno = db.collection("config").doc("turno_ativo")
-    .onSnapshot(doc => {
-      if (!usuarioAtual || !perfilAtual) return;
-      const turno = doc.exists ? doc.data() : null;
-      const ehMeu = turno && turno.uid === usuarioAtual.uid;
-
-      if (ehMeu) {
-        // Fui escalado — entra na tela home
-        document.getElementById("porteiro-nome").textContent = perfilAtual.nome;
-        document.getElementById("header-sub").textContent = "Porteiro — " + perfilAtual.nome;
-        mostrarTela("tela-home");
-        iniciarEscuta();
-      } else {
-        // Fui desescalado — volta para fora de plantão
-        if (unsubscribe) { unsubscribe(); unsubscribe = null; }
-        document.getElementById("header-sub").textContent = "Fora de plantão";
-        mostrarTela("tela-fora-plantao");
-        toast("🔴 Seu turno foi encerrado pelo administrador.");
-      }
-    });
-}
-
-// ── ESCUTA ENCOMENDAS ─────────────────────────────
-function iniciarEscuta() {
-  if (unsubscribe) unsubscribe();
-  unsubscribe = db.collection("encomendas")
-    .where("status", "==", "Aguardando Retirada")
-    .onSnapshot(snap => {
-      const anterior = todasEncomendas.length;
-      todasEncomendas = snap.docs.map(d => ({ id: d.id, ...d.data() }));
-      document.getElementById("contador-pendentes").textContent = todasEncomendas.length;
-      renderizarPendentes();
-      if (anterior > 0 && todasEncomendas.length > anterior) tocarBip();
-    }, err => {
-      toast("❌ Erro ao carregar encomendas: " + err.message);
-    });
-}
-
-function renderizarPendentes() {
-  const lista = document.getElementById("lista-pendentes");
-  if (todasEncomendas.length === 0) {
-    lista.innerHTML = `<div class="empty"><div class="empty-icon">🎉</div><div>Nenhuma encomenda pendente!</div></div>`;
-    return;
-  }
-  lista.innerHTML = todasEncomendas.map(enc => {
-    const dt = enc.dataHora || "—";
-    return `<div class="enc-card">
-      <div class="enc-card-info">
-        <div class="enc-card-apto">🏠 Apto ${enc.apartamento}</div>
-        <div class="enc-card-tipo">${enc.tipo||"Encomenda"} · ${enc.remetente||"—"}</div>
-        <div class="enc-card-data">${dt}</div>
-      </div>
-      <button class="btn-retirar-enc" onclick="confirmarRetirada('${enc.id}','${enc.apartamento}')">✅ Retirado</button>
-    </div>`;
-  }).join("");
-}
-
-// ── MODAL NOVA ENCOMENDA ──────────────────────────
-function abrirModalNovaEncomenda() {
-  document.getElementById("nova-apto").value        = "";
-  document.getElementById("nova-remetente").value   = "";
-  document.getElementById("nova-destinatario").value= "";
+function abrirModalNovaEncomenda(){
+  document.getElementById("nova-apto").value="";document.getElementById("nova-remetente").value="";
+  document.getElementById("nova-destinatario").value="";document.getElementById("nova-tipo-outros").value="";
+  document.getElementById("campo-outros-wrapper").style.display="none";
   document.getElementById("nova-erro").classList.remove("visivel");
-  document.getElementById("btn-registrar").disabled = false;
-  document.getElementById("btn-registrar").textContent = "📦 Registrar Encomenda";
-  document.getElementById("nova-tipo-outros").value = "";
-  document.getElementById("campo-outros-wrapper").style.display = "none";
-  tipoSelecionado      = "Caixa/Pacote";
-  remetenteSelecionado = "";
-  // Reset UI
-  document.querySelectorAll(".btn-tipo-enc").forEach((b,i) => b.classList.toggle("ativo", i===0));
-  document.querySelectorAll(".btn-remetente").forEach(b => b.classList.remove("ativo"));
+  document.getElementById("btn-registrar").disabled=false;document.getElementById("btn-registrar").textContent="📦 Registrar Encomenda";
+  tipoSelecionado="Caixa/Pacote";remetenteSelecionado="";
+  document.querySelectorAll(".btn-tipo-enc").forEach((b,i)=>b.classList.toggle("ativo",i===0));
+  document.querySelectorAll(".btn-remetente").forEach(b=>b.classList.remove("ativo"));
   document.getElementById("modal-nova").classList.add("aberto");
 }
-
-function abrirModalRetirada() {
-  const lista = document.getElementById("lista-retirada");
-  if (todasEncomendas.length === 0) {
-    lista.innerHTML = `<div class="empty"><div class="empty-icon">🎉</div><div>Nenhuma encomenda pendente!</div></div>`;
-  } else {
-    lista.innerHTML = todasEncomendas.map(enc => {
-      const dt = enc.dataHora || "—";
-      return `<div class="enc-card">
-        <div class="enc-card-info">
-          <div class="enc-card-apto">🏠 Apto ${enc.apartamento}</div>
-          <div class="enc-card-tipo">${enc.tipo||"Encomenda"} · ${enc.remetente||"—"}</div>
-          <div class="enc-card-data">${dt}</div>
-        </div>
-        <button class="btn-retirar-enc" onclick="confirmarRetirada('${enc.id}','${enc.apartamento}')">✅ Retirado</button>
-      </div>`;
-    }).join("");
-  }
+function abrirModalRetirada(){
+  const lista=document.getElementById("lista-retirada");
+  if(todasEncomendas.length===0){lista.innerHTML='<div class="empty"><div class="empty-icon">🎉</div><div>Nenhuma encomenda pendente!</div></div>';}
+  else{lista.innerHTML=todasEncomendas.map(enc=>`<div class="enc-card"><div class="enc-card-info"><div class="enc-card-apto">🏠 Apto ${enc.apartamento}</div><div class="enc-card-tipo">${enc.tipo||"Encomenda"} · ${enc.remetente||"—"}</div><div class="enc-card-data">${enc.dataHora||"—"}</div></div><button class="btn-retirar-enc" onclick="confirmarRetirada('${enc.id}','${enc.apartamento}')">✅ Retirado</button></div>`).join("");}
   document.getElementById("modal-retirada").classList.add("aberto");
 }
-
-function fecharModal(id) {
-  document.getElementById(id).classList.remove("aberto");
+function fecharModal(id){document.getElementById(id).classList.remove("aberto");}
+function selecionarTipo(btn,tipo){
+  tipoSelecionado=tipo;document.querySelectorAll(".btn-tipo-enc").forEach(b=>b.classList.remove("ativo"));btn.classList.add("ativo");
+  const c=document.getElementById("campo-outros-wrapper");c.style.display=tipo==="Outros"?"block":"none";
+  if(tipo==="Outros")document.getElementById("nova-tipo-outros").focus();
 }
-
-function selecionarTipo(btn, tipo) {
-  tipoSelecionado = tipo;
-  document.querySelectorAll(".btn-tipo-enc").forEach(b => b.classList.remove("ativo"));
-  btn.classList.add("ativo");
-  // Mostra campo de texto só quando "Outros" for selecionado
-  const campoOutros = document.getElementById("campo-outros-wrapper");
-  campoOutros.style.display = tipo === "Outros" ? "block" : "none";
-  if (tipo === "Outros") {
-    document.getElementById("nova-tipo-outros").focus();
-  }
+function selecionarRemetente(btn,nome){
+  const ja=btn.classList.contains("ativo");document.querySelectorAll(".btn-remetente").forEach(b=>b.classList.remove("ativo"));
+  if(!ja){btn.classList.add("ativo");remetenteSelecionado=nome;document.getElementById("nova-remetente").value=nome;}
+  else{remetenteSelecionado="";document.getElementById("nova-remetente").value="";}
 }
-
-function selecionarRemetente(btn, nome) {
-  const jaAtivo = btn.classList.contains("ativo");
-  document.querySelectorAll(".btn-remetente").forEach(b => b.classList.remove("ativo"));
-  if (!jaAtivo) {
-    btn.classList.add("ativo");
-    remetenteSelecionado = nome;
-    document.getElementById("nova-remetente").value = nome;
-  } else {
-    remetenteSelecionado = "";
-    document.getElementById("nova-remetente").value = "";
-  }
+async function registrarEncomenda(){
+  const apto=document.getElementById("nova-apto").value.trim();
+  const remetente=document.getElementById("nova-remetente").value.trim()||remetenteSelecionado||"Não informado";
+  const destinatario=document.getElementById("nova-destinatario").value.trim();
+  const btn=document.getElementById("btn-registrar"),erro=document.getElementById("nova-erro");
+  if(!apto){mostrarErro(erro,"Informe o apartamento.");return;}
+  if(!APTOS.includes(apto)){mostrarErro(erro,"Apartamento inválido. Verifique o número.");return;}
+  const tipoFinal=tipoSelecionado==="Outros"?(document.getElementById("nova-tipo-outros").value.trim()||"Outros"):tipoSelecionado;
+  if(tipoSelecionado==="Outros"&&!document.getElementById("nova-tipo-outros").value.trim()){mostrarErro(erro,"Descreva o tipo de encomenda.");return;}
+  btn.disabled=true;btn.textContent="Registrando...";erro.classList.remove("visivel");
+  const agora=new Date(),dataFmt=agora.toLocaleString("pt-BR",{day:"2-digit",month:"2-digit",year:"numeric",hour:"2-digit",minute:"2-digit"}),docId="enc_"+apto+"_"+agora.getTime();
+  try{
+    await db.collection("encomendas").doc(docId).set({apartamento:apto,destinatario,tipo:tipoFinal,remetente,porteiro:perfilAtual.nome,dataHora:dataFmt,status:"Aguardando Retirada",criadoEm:agora});
+    toast("✅ Encomenda do Apto "+apto+" registrada!");fecharModal("modal-nova");tocarBipRegistro();
+  }catch(e){mostrarErro(erro,"Erro ao registrar. Tente novamente.");btn.disabled=false;btn.textContent="📦 Registrar Encomenda";}
 }
-
-// ── REGISTRAR ENCOMENDA ───────────────────────────
-async function registrarEncomenda() {
-  const apto        = document.getElementById("nova-apto").value.trim();
-  const remetente   = document.getElementById("nova-remetente").value.trim() || remetenteSelecionado || "Não informado";
-  const destinatario= document.getElementById("nova-destinatario").value.trim();
-  const btn         = document.getElementById("btn-registrar");
-  const erro        = document.getElementById("nova-erro");
-
-  if (!apto) { mostrarErro(erro, "Informe o apartamento."); return; }
-  if (!APTOS.includes(apto)) { mostrarErro(erro, "Apartamento inválido. Verifique o número."); return; }
-
-  // Se "Outros" foi selecionado, usa o texto digitado
-  const tipoFinal = tipoSelecionado === "Outros"
-    ? (document.getElementById("nova-tipo-outros").value.trim() || "Outros")
-    : tipoSelecionado;
-
-  if (tipoSelecionado === "Outros" && !document.getElementById("nova-tipo-outros").value.trim()) {
-    mostrarErro(erro, "Descreva o tipo de encomenda.");
-    return;
-  }
-
-  btn.disabled = true; btn.textContent = "Registrando...";
-  erro.classList.remove("visivel");
-
-  const agora  = new Date();
-  const dataFmt = agora.toLocaleString("pt-BR", { day:"2-digit", month:"2-digit", year:"numeric", hour:"2-digit", minute:"2-digit" });
-  const docId  = "enc_" + apto + "_" + agora.getTime();
-
-  try {
-    await db.collection("encomendas").doc(docId).set({
-      apartamento:  apto,
-      destinatario: destinatario,
-      tipo:         tipoFinal,
-      remetente:    remetente,
-      porteiro:     perfilAtual.nome,
-      dataHora:     dataFmt,
-      status:       "Aguardando Retirada",
-      criadoEm:     agora,
-    });
-
-    toast("✅ Encomenda do Apto " + apto + " registrada!");
-    fecharModal("modal-nova");
-
-    // Toca bip de confirmação
-    tocarBipRegistro();
-  } catch(e) {
-    mostrarErro(erro, "Erro ao registrar. Tente novamente.");
-    btn.disabled = false;
-    btn.textContent = "📦 Registrar Encomenda";
-  }
+async function confirmarRetirada(docId,apto){
+  if(!confirm(`Confirmar retirada da encomenda do Apto ${apto}?`))return;
+  try{await db.collection("encomendas").doc(docId).update({status:"Retirado",dataRetirada:new Date(),retiradoPor:perfilAtual.nome});toast("✅ Apto "+apto+" — encomenda retirada!");fecharModal("modal-retirada");}
+  catch(e){toast("❌ Erro ao atualizar. Tente novamente.");}
 }
-
-// ── MARCAR RETIRADO ───────────────────────────────
-async function confirmarRetirada(docId, apto) {
-  if (!confirm(`Confirmar retirada da encomenda do Apto ${apto}?`)) return;
-
-  try {
-    await db.collection("encomendas").doc(docId).update({
-      status:       "Retirado",
-      dataRetirada: new Date(),
-      retiradoPor:  perfilAtual.nome,
-    });
-    toast("✅ Apto " + apto + " — encomenda retirada!");
-    fecharModal("modal-retirada");
-  } catch(e) {
-    toast("❌ Erro ao atualizar. Tente novamente.");
-  }
-}
-
-// ── SOM ───────────────────────────────────────────
-function tocarBip() {
-  try {
-    const ctx  = new (window.AudioContext || window.webkitAudioContext)();
-    [[880,0,0.15],[1100,0.18,0.15],[1320,0.36,0.25]].forEach(([f,s,d]) => {
-      const o = ctx.createOscillator(), g = ctx.createGain();
-      o.connect(g); g.connect(ctx.destination);
-      o.frequency.value = f; o.type = "sine";
-      g.gain.setValueAtTime(0, ctx.currentTime+s);
-      g.gain.linearRampToValueAtTime(0.5, ctx.currentTime+s+0.01);
-      g.gain.linearRampToValueAtTime(0, ctx.currentTime+s+d);
-      o.start(ctx.currentTime+s); o.stop(ctx.currentTime+s+d+0.05);
-    });
-  } catch(e) {}
-}
-
-function tocarBipRegistro() {
-  try {
-    const ctx = new (window.AudioContext || window.webkitAudioContext)();
-    [[523,0,0.1],[659,0.12,0.1],[784,0.24,0.2]].forEach(([f,s,d]) => {
-      const o = ctx.createOscillator(), g = ctx.createGain();
-      o.connect(g); g.connect(ctx.destination);
-      o.frequency.value = f; o.type = "sine";
-      g.gain.setValueAtTime(0, ctx.currentTime+s);
-      g.gain.linearRampToValueAtTime(0.4, ctx.currentTime+s+0.01);
-      g.gain.linearRampToValueAtTime(0, ctx.currentTime+s+d);
-      o.start(ctx.currentTime+s); o.stop(ctx.currentTime+s+d+0.05);
-    });
-  } catch(e) {}
-}
-
-// ── HELPERS ───────────────────────────────────────
-function mostrarErro(el, msg) { el.textContent = msg; el.classList.add("visivel"); }
-
-function toast(msg, dur=3500) {
-  const t = document.getElementById("toast");
-  t.textContent = msg; t.classList.add("show");
-  setTimeout(() => t.classList.remove("show"), dur);
-}
-
-function traduzirErro(code) {
-  return {
-    "auth/user-not-found":       "E-mail não cadastrado.",
-    "auth/wrong-password":       "Senha incorreta.",
-    "auth/invalid-email":        "E-mail inválido.",
-    "auth/email-already-in-use": "Este e-mail já está em uso.",
-    "auth/weak-password":        "Senha fraca. Use pelo menos 6 caracteres.",
-    "auth/too-many-requests":    "Muitas tentativas. Aguarde.",
-    "auth/invalid-credential":   "E-mail ou senha incorretos.",
-  }[code] || "Erro inesperado. Tente novamente.";
-}
+function tocarBip(){try{const ctx=new(window.AudioContext||window.webkitAudioContext)();[[880,0,0.15],[1100,0.18,0.15],[1320,0.36,0.25]].forEach(([f,s,d])=>{const o=ctx.createOscillator(),g=ctx.createGain();o.connect(g);g.connect(ctx.destination);o.frequency.value=f;o.type="sine";g.gain.setValueAtTime(0,ctx.currentTime+s);g.gain.linearRampToValueAtTime(0.5,ctx.currentTime+s+0.01);g.gain.linearRampToValueAtTime(0,ctx.currentTime+s+d);o.start(ctx.currentTime+s);o.stop(ctx.currentTime+s+d+0.05);});}catch(e){}}
+function tocarBipRegistro(){try{const ctx=new(window.AudioContext||window.webkitAudioContext)();[[523,0,0.1],[659,0.12,0.1],[784,0.24,0.2]].forEach(([f,s,d])=>{const o=ctx.createOscillator(),g=ctx.createGain();o.connect(g);g.connect(ctx.destination);o.frequency.value=f;o.type="sine";g.gain.setValueAtTime(0,ctx.currentTime+s);g.gain.linearRampToValueAtTime(0.4,ctx.currentTime+s+0.01);g.gain.linearRampToValueAtTime(0,ctx.currentTime+s+d);o.start(ctx.currentTime+s);o.stop(ctx.currentTime+s+d+0.05);});}catch(e){}}
+function mostrarErro(el,msg){el.textContent=msg;el.classList.add("visivel");}
+function toast(msg,dur=3500){const t=document.getElementById("toast");t.textContent=msg;t.classList.add("show");setTimeout(()=>t.classList.remove("show"),dur);}
+function traduzirErro(code){return{"auth/user-not-found":"E-mail não cadastrado.","auth/wrong-password":"Senha incorreta.","auth/invalid-email":"E-mail inválido.","auth/email-already-in-use":"Este e-mail já está em uso.","auth/weak-password":"Senha fraca. Use pelo menos 6 caracteres.","auth/too-many-requests":"Muitas tentativas. Aguarde.","auth/invalid-credential":"E-mail ou senha incorretos."}[code]||"Erro inesperado. Tente novamente.";}
 </script>
 </body>
 </html>
